@@ -12,12 +12,12 @@ def plot_wind_contour(ax, u, v, lcolor, lwidth):
 
 def plot_obs(ax, obsi, obsj, obs):
   nobs = obs.size
-  obsmax = max(obs)
-  obsmin = min(obs)
+  obsmax = 30
+  obsmin = -30
   cmap = [plt.cm.jet(x) for x in np.linspace(0, 1, round(obsmax-obsmin)+1)]
   for i in range(nobs):
-    ind = int(round(obs[i] - obsmin) + 1)
-    plt.scatter(obsi[i], obsj[i], s=80, c=[cmap[ind-1][0:3]])
+    ind = max(min(int(round(obs[i] - obsmin)), int(round(obsmax-obsmin))), 0)
+    plt.scatter(obsi[i], obsj[i], s=80, c=[cmap[ind][0:3]])
 
 
 def plot_ens(ax, ni, nj, Xens, Xt):
