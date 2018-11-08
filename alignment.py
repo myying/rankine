@@ -28,8 +28,7 @@ def displace_vector(ni, nj, nv, Xb, H, obs, obserr):
       Xb1[v*ni*nj:(v+1)*ni*nj] = deformation(ni, nj, Xb[v*ni*nj:(v+1)*ni*nj], iD, jD)
     innov = np.matmul(H, Xb1.T) - obs
     cost1 = 0.5*np.matmul(np.matmul(innov.T, R_inv), innov)
-    cost2 = 0.5*np.sum(D**2)/100
-    return cost1 + cost2
+    return cost1
 
   # def grad_function(D):
   #   iD = D[0]
@@ -116,7 +115,7 @@ def deformation(ni, nj, X, iD, jD):
   points = np.zeros((ni*nj, 2))
   points[:, 0] = np.reshape(ii[0:ni, 0:nj], (ni*nj,)) + iD
   points[:, 1] = np.reshape(jj[0:ni, 0:nj], (ni*nj,)) + jD
-  xx = interpolate.griddata(points, X, (ii, jj), method='cubic')
+  xx = interpolate.griddata(points, X, (ii, jj), method='linear')
   xx1 = interpolate.griddata(points, X, (ii, jj), method='nearest')
   ind = np.where(np.isnan(xx))
   xx[ind] = xx1[ind]
