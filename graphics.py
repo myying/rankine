@@ -22,6 +22,7 @@ def plot_obs(ax, obsi, obsj, obs):
 
 def plot_ens(ax, ni, nj, Xens, Xt):
   nens, nX = Xens.shape
+  nens = 20
   cmap = [plt.cm.jet(x) for x in np.linspace(0, 1, nens)]
   for n in range(nens):
     u = np.reshape(Xens[n, 0:ni*nj], (ni, nj))
@@ -31,6 +32,51 @@ def plot_ens(ax, ni, nj, Xens, Xt):
   vt = np.reshape(Xt[ni*nj:2*ni*nj], (ni, nj))
   plot_wind_contour(ax, ut, vt, 'black', 4)
 
+
+def hist_normal(bins, sample):
+  n = bins.size
+  nsample = sample.size
+  count = np.ones(nsample)
+  dist = np.zeros(n)
+  for i in range(n):
+    if i == 0:
+      v1 = -np.inf
+      v2 = (bins[i]+bins[i+1])/2
+    if i == n-1:
+      v1 = (bins[i-1]+bins[i])/2
+      v2 = np.inf
+    if i > 0 and i < n-1:
+      v1 = (bins[i-1]+bins[i])/2
+      v2 = (bins[i]+bins[i+1])/2
+    ind = np.where(np.logical_and(sample > v1, sample <= v2))
+    dist[i] = np.sum(count[ind])
+  dist = dist/nsample
+  return dist
+
+def sample_correlation(x1, x2):
+  nens = x1.size
+  x1_mean = np.mean(x1)
+  x2_mean = np.mean(x2)
+  x1p = x1 - x1_mean
+  x2p = x2 - x2_mean
+  cov = np.sum(x1p * x2p)
+  x1_norm = np.sum(x1p ** 2)
+  x2_norm = np.sum(x2p ** 2)
+  corr = cov/np.sqrt(x1_norm * x2_norm)
+  return corr
+
+def smooth1d(x, smth):
+  if smth > 0:
+    x_smooth = np.zeros(x.shape)
+    cw = 0.0
+    for i in np.arange(-smth, smth, 1):
+      w = np.exp(-i**2/(smth/2.0)**2)
+      cw += w
+      x_smooth += w * np.roll(x, i)
+    x_smooth = x_smooth/cw
+  else:
+    x_smooth = x
+  return x_smooth
 
 def set_axis(ax, ni, nj):
   ax.set_aspect('equal', 'box')
