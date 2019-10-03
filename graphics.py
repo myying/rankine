@@ -3,11 +3,13 @@ import matplotlib.pyplot as plt
 from netCDF4 import Dataset
 
 
-def plot_wind_contour(ax, u, v, lcolor, lwidth):
-  wspd = np.sqrt(u**2 + v**2)
-  ni, nj = u.shape
+def plot_wind_contour(ax, ni, nj, X, lcolor, lwidth):
+  u = np.reshape(X[0:ni*nj], (ni, nj))
+  # v = np.reshape(X[ni*nj:2*ni*nj], (ni, nj))
+  # wspd = np.sqrt(u**2 + v**2)
   x, y = np.mgrid[0:ni, 0:nj]
-  ax.contour(x, y, wspd, (15,), colors=lcolor, linewidths=lwidth)
+  # ax.contour(x, y, wspd, (15,), colors=lcolor, linewidths=lwidth)
+  ax.contour(x, y, u, (-15, 15), colors=lcolor, linewidths=lwidth)
 
 
 def plot_obs(ax, obsi, obsj, obs):
@@ -25,12 +27,8 @@ def plot_ens(ax, ni, nj, Xens, Xt):
   nens = 20
   cmap = [plt.cm.jet(x) for x in np.linspace(0, 1, nens)]
   for n in range(nens):
-    u = np.reshape(Xens[n, 0:ni*nj], (ni, nj))
-    v = np.reshape(Xens[n, ni*nj:2*ni*nj], (ni, nj))
-    plot_wind_contour(ax, u, v, [cmap[n][0:3]], 2)
-  ut = np.reshape(Xt[0:ni*nj], (ni, nj))
-  vt = np.reshape(Xt[ni*nj:2*ni*nj], (ni, nj))
-  plot_wind_contour(ax, ut, vt, 'black', 4)
+    plot_wind_contour(ax, ni, nj, Xens[n, :], [cmap[n][0:3]], 2)
+  plot_wind_contour(ax, ni, nj, Xt, 'black', 4)
 
 
 def hist_normal(bins, sample):
@@ -82,8 +80,10 @@ def set_axis(ax, ni, nj):
   ax.set_aspect('equal', 'box')
   ax.set_xlim(0, ni-1)
   ax.set_ylim(0, nj-1)
-  ax.set_xticks(np.arange(0, ni, 20))
-  ax.set_yticks(np.arange(0, nj, 20))
+  # ax.set_xticks(np.arange(0, ni, 20))
+  # ax.set_yticks(np.arange(0, nj, 20))
+  ax.set_xticks([])
+  ax.set_yticks([])
 
 
 def output_ens(filename, ni, nj, Xens, Xtruth):

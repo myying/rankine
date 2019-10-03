@@ -54,8 +54,9 @@ def obs_operator(iX, jX, nv, iObs, jObs, iSite, jSite):
   rX[np.where(rX==0)] = 1e-10
   for p in range(nobs):
     l = L[p, :]
-    H[p, 0:nX] = l * (np.matmul(l, iX) - iSite) / np.matmul(l, rX)    # u*(i-iSite)/r
-    H[p, nX:2*nX] = l * (np.matmul(l, jX) - jSite) / np.matmul(l, rX) # v*(j-jSite)/r
+    # H[p, 0:nX] = l * (np.matmul(l, iX) - iSite) / np.matmul(l, rX)    # u*(i-iSite)/r
+    # H[p, nX:2*nX] = l * (np.matmul(l, jX) - jSite) / np.matmul(l, rX) # v*(j-jSite)/r
+    H[p, 0:nX] = l
   return H
 
 

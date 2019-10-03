@@ -6,16 +6,18 @@ import alignment as al
 import graphics as g
 import matplotlib.pyplot as plt
 import DA
+import sys
 
 plt.switch_backend('Agg')
-plt.figure(figsize=(14, 8))
+plt.figure(figsize=(5, 5))
 
-#np.random.seed(1)  # fix random number seed, make results predictable
+np.random.seed(1)  # fix random number seed, make results predictable
 
 ni = 41  # number of grid points i, j directions
 nj = 41
 nv = 2   # number of variables, (u, v)
 nens = 1000  # ensemble size
+nens_show = 20
 
 ### Rankine Vortex definition, truth
 Rmw = 5    # radius of maximum wind
@@ -23,12 +25,14 @@ Vmax = 30   # maximum wind speed
 Vout = 0    # wind speed outside of vortex
 iStorm = 20 # location of vortex in i, j
 jStorm = 20
-iout = np.array([27])
-jout = np.array([14])
-ioff = -1
-joff = -1
+x_in = int(sys.argv[1])
+y_in = int(sys.argv[2])
+iout = np.array([x_in])
+jout = np.array([y_in])
+ioff = 0
+joff = 12
 
-nobs = 200   # number of observations
+nobs = 500   # number of observations
 obserr = 1.0 # observation error spread
 localize_cutoff = 100  # localization cutoff distance (taper to zero)
 alpha = 0.5  ##for LPF
@@ -39,7 +43,7 @@ Xt = rv.make_state(ni, nj, nv, iStorm, jStorm, Rmw, Vmax, Vout)
 
 ###prior ensemble
 Xb = np.zeros((nens, ni*nj*nv))
-Csprd = 0.8*Rmw
+Csprd = 0.1*Rmw
 iBias = 0
 jBias = 0
 Rsprd = 0
@@ -54,11 +58,11 @@ for n in range(nens):
   # iD, jD = al.random_vector(ni, nj, np.array([0, 0]), 20, 3)
   # for v in range(nv):
   #   Xb[n, v*ni*nj:(v+1)*ni*nj] = al.deformation(ni, nj, Xb[n, v*ni*nj:(v+1)*ni*nj], iD, jD)
-ax = plt.subplot(2, 3, 1)
-g.plot_ens(ax, ni, nj, Xb, Xt)
-g.set_axis(ax, ni, nj)
-ax.plot(iout, jout, 'wo')
-ax.tick_params(labelsize=15)
+# ax = plt.subplot(1, 2, 1)
+# g.plot_ens(ax, ni, nj, Xb, Xt)
+# g.set_axis(ax, ni, nj)
+# # ax.plot(iout, jout, 'wo')
+# # ax.tick_params(labelsize=15)
 
 ###observations (radial velocity)
 iObs = np.random.uniform(0, ni, size=nobs)
@@ -70,45 +74,44 @@ H = rv.obs_operator(iX, jX, nv, iObs, jObs, iSite, jSite)
 obs = np.matmul(H, Xt) + np.random.normal(0.0, obserr, nobs)
 
 ###plot obs
-# ax = plt.subplot(2, 3, 2)
+# ax = plt.subplot(1, 2, 2)
 # g.plot_obs(ax, iObs, jObs, obs)
 # g.set_axis(ax, ni, nj)
-# ut = np.reshape(Xt[0:ni*nj], (ni, nj))
-# vt = np.reshape(Xt[ni*nj:2*ni*nj], (ni, nj))
-# g.plot_wind_contour(ax, ut, vt, 'black', 4)
+# g.plot_wind_contour(ax, ni, nj, Xt, 'black', 4)
 # ax.tick_params(labelsize=15)
 
 ###plot histogram
-ax = plt.subplot(2, 3, 3)
-Hout = rv.obs_operator(iX, jX, nv, iout, jout, iSite, jSite)
-prior_err = np.dot(Hout, Xb.T) - np.dot(Hout, Xt)
-err_mean = np.mean(prior_err)
-err_std = np.std(prior_err)
-ii = np.arange(-50, 50, 1)
-jj = np.exp(-0.5*(ii-err_mean)**2/ err_std**2) / np.sqrt(2*np.pi) / err_std
-jj0 = g.hist_normal(ii, prior_err[0, :])
-ax.plot(ii, jj0, 'k', linewidth=4, label='Sample')
-ax.plot(ii, jj, 'r:', linewidth=2, label='Gaussian')
-ax.legend(fontsize=12, loc=1)
-ax.set_xlim(-30, 50)
-ax.tick_params(labelsize=15)
+# ax = plt.subplot(1, 1, 1)
+# Hout = rv.obs_operator(iX, jX, nv, iout, jout, iSite, jSite)
+# prior_err = np.dot(Hout, Xb.T) - np.dot(Hout, Xt)
+# err_mean = np.mean(prior_err)
+# err_std = np.std(prior_err)
+# ii = np.arange(-50, 50, 1)
+# jj = np.exp(-0.5*(ii-err_mean)**2/ err_std**2) / np.sqrt(2*np.pi) / err_std
+# jj0 = g.hist_normal(ii, prior_err[0, :])
+# ax.plot(ii, jj0, 'k', linewidth=4, label='Sample')
+# ax.plot(ii, jj, 'r:', linewidth=2, label='Gaussian')
+# ax.legend(fontsize=12, loc=1)
+# ax.set_xlim(-30, 50)
+# ax.set_ylim(-0.05, 0.5)
+# ax.tick_params(labelsize=15)
 
-ax = plt.subplot(2, 3, 5)
-Hout = rv.obs_operator(iX, jX, nv, iout+ioff, jout+joff, iSite, jSite)
-prior_err = np.dot(Hout, Xb.T) - np.dot(Hout, Xt)
-err_mean = np.mean(prior_err)
-err_std = np.std(prior_err)
-ii = np.arange(-50, 50, 1)
-jj = np.exp(-0.5*(ii-err_mean)**2/ err_std**2) / np.sqrt(2*np.pi) / err_std
-jj0 = g.hist_normal(ii, prior_err[0, :])
-ax.plot(jj0, ii, 'k', linewidth=4, label='Sample')
-ax.plot(jj, ii, 'r:', linewidth=2, label='Gaussian')
-ax.legend(fontsize=12, loc=1)
-ax.set_ylim(-30, 50)
-ax.tick_params(labelsize=15)
+# ax = plt.subplot(2, 3, 5)
+# Hout = rv.obs_operator(iX, jX, nv, iout+ioff, jout+joff, iSite, jSite)
+# prior_err = np.dot(Hout, Xb.T) - np.dot(Hout, Xt)
+# err_mean = np.mean(prior_err)
+# err_std = np.std(prior_err)
+# ii = np.arange(-50, 50, 1)
+# jj = np.exp(-0.5*(ii-err_mean)**2/ err_std**2) / np.sqrt(2*np.pi) / err_std
+# jj0 = g.hist_normal(ii, prior_err[0, :])
+# ax.plot(jj0, ii, 'k', linewidth=4, label='Sample')
+# ax.plot(jj, ii, 'r:', linewidth=2, label='Gaussian')
+# ax.legend(fontsize=12, loc=1)
+# ax.set_ylim(-30, 50)
+# ax.tick_params(labelsize=15)
 
 ###Covariance structure
-ax = plt.subplot(2, 3, 2)
+ax = plt.subplot(1, 1, 1)
 Hout = rv.obs_operator(iX, jX, nv, iout, jout, iSite, jSite)
 x1 = np.dot(Hout, Xb.T)
 corr_map = np.zeros((ni, nj))
@@ -118,22 +121,28 @@ for n in range(ni*nj):
   x2 = Xb[:, n]
   corr_map[i, j] = g.sample_correlation(x1, x2)
 ii, jj = np.mgrid[0:ni, 0:nj]
-ax.contourf(ii, jj, corr_map, cmap='bwr')
+ax.contourf(ii, jj, corr_map, np.arange(-1, 1.2, 0.1), cmap='bwr')
+print(corr_map[iout[0], jout[0]])
+# print(corr_map[iout[0]+ioff, jout[0]+joff])
 g.set_axis(ax, ni, nj)
-ax.plot(iout, jout, 'wo')
-ax.plot(iout+ioff, jout+joff, 'co')
+g.plot_wind_contour(ax, ni, nj, Xt, 'black', 4)
+ax.plot(iout, jout, 'k+', markersize=10)
+# ax.plot(iout+ioff, jout+joff, 'co')
 ax.tick_params(labelsize=15)
 
 ###scatter plot
-ax = plt.subplot(2, 3, 6)
-Hout = rv.obs_operator(iX, jX, nv, iout, jout, iSite, jSite)
-err1 = np.dot(Hout, Xb.T) - np.dot(Hout, Xt)
-Hout = rv.obs_operator(iX, jX, nv, iout+ioff, jout+joff, iSite, jSite)
-err2 = np.dot(Hout, Xb.T) - np.dot(Hout, Xt)
-ax.scatter(err1[0, :], err2[0, :], s=0.3, c='k')
-ax.set_xlim(-30, 50)
-ax.set_ylim(-30, 50)
-ax.tick_params(labelsize=15)
+# ax = plt.subplot(2, 3, 6)
+# Hout = rv.obs_operator(iX, jX, nv, iout, jout, iSite, jSite)
+# err1 = np.dot(Hout, Xb.T) - np.dot(Hout, Xt)
+# Hout = rv.obs_operator(iX, jX, nv, iout+ioff, jout+joff, iSite, jSite)
+# err2 = np.dot(Hout, Xb.T) - np.dot(Hout, Xt)
+# ax.scatter(err1[0, :], err2[0, :], s=0.3, c='k')
+# cmap = [plt.cm.jet(x) for x in np.linspace(0, 1, nens_show)]
+# for n in range(nens_show):
+#   ax.scatter(err1[0, n], err2[0, n], s=10, c=[cmap[n][0:3]])
+# ax.set_xlim(-30, 50)
+# ax.set_ylim(-30, 50)
+# ax.tick_params(labelsize=15)
 
 ###show before/after displacement
 # iD, jD = al.random_vector(ni, nj, np.array([0, 0]), 100, 2)
@@ -228,5 +237,6 @@ ax.tick_params(labelsize=15)
 # g.output_ens('1.nc', ni, nj, Xa, Xt)
 # g.output_ens('2.nc', ni, nj, Xa1, Xt)
 
-plt.savefig('1.pdf')
+plt.savefig('error_correlation/{}_{}.png'.format(x_in, y_in), dpi=100)
+# plt.savefig('1.pdf')
 
