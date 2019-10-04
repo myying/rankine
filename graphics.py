@@ -22,15 +22,6 @@ def plot_obs(ax, obsi, obsj, obs):
     plt.scatter(obsi[i], obsj[i], s=80, c=[cmap[ind][0:3]])
 
 
-def plot_ens(ax, ni, nj, Xens, Xt):
-  nens, nX = Xens.shape
-  nens = 20
-  cmap = [plt.cm.jet(x) for x in np.linspace(0, 1, nens)]
-  for n in range(nens):
-    plot_wind_contour(ax, ni, nj, Xens[n, :], [cmap[n][0:3]], 2)
-  plot_wind_contour(ax, ni, nj, Xt, 'black', 4)
-
-
 def hist_normal(bins, sample):
   n = bins.size
   nsample = sample.size
