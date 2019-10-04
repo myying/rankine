@@ -15,6 +15,7 @@ Vmax = 30   # maximum wind speed
 Vout = 0    # wind speed outside of vortex
 iStorm = 20 # location of vortex in i, j
 jStorm = 20
+loc_sprd = 1.0
 
 nobs = 500   # number of observations
 obserr = 1.0 # observation error spread
@@ -27,7 +28,7 @@ Xt = rv.make_state(ni, nj, nv, iStorm, jStorm, Rmw, Vmax, Vout)
 
 ##Prior ensemble
 Xb = np.zeros((nens, ni*nj*nv))
-Csprd = 2.0*Rmw
+Csprd = loc_sprd*Rmw
 iBias = 0
 jBias = 0
 Rsprd = 0

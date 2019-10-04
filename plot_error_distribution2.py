@@ -12,8 +12,8 @@ for x_in in range(41):
   for y_in in range(41):
     iout2 = np.array([x_in])
     jout2 = np.array([y_in])
-    iout1 = np.array([20])
-    jout1 = np.array([14])
+    iout1 = np.array([23])
+    jout1 = np.array([26])
     nens_show = 10
 
     plt.figure(figsize=(10, 5))
@@ -48,6 +48,6 @@ for x_in in range(41):
     ax.tick_params(labelsize=15)
 
     print(x_in, y_in)
-    plt.savefig('/glade/work/mying/visual/rankine/error_distribution2/{}_{}.png'.format(x_in, y_in), dpi=100)
+    plt.savefig('/glade/work/mying/visual/rankine/loc_sprd_{}'.format(p.loc_sprd)+'/two_variable1/error_distribution2/{}_{}.png'.format(x_in, y_in), dpi=100)
     plt.close()
 

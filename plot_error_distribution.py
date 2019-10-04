@@ -31,6 +31,6 @@ for x_in in range(41):
     ax.tick_params(labelsize=15)
 
     print(x_in, y_in)
-    plt.savefig('/glade/work/mying/visual/rankine/error_distribution/{}_{}.png'.format(x_in, y_in), dpi=100)
+    plt.savefig('/glade/work/mying/visual/rankine/loc_sprd_{}'.format(p.loc_sprd)+'/error_distribution/{}_{}.png'.format(x_in, y_in), dpi=100)
     plt.close()
 
