@@ -13,7 +13,7 @@ for x_in in range(41):
     iout = np.array([x_in])
     jout = np.array([y_in])
 
-    plt.figure(figsize=(5, 5))
+    plt.figure(figsize=(3, 3))
     ax = plt.subplot(1, 1, 1)
     Hout = rv.obs_operator(p.iX, p.jX, p.nv, iout, jout, p.iSite, p.jSite)
     x1 = np.dot(Hout, p.Xb.T)
@@ -26,7 +26,7 @@ for x_in in range(41):
     ii, jj = np.mgrid[0:p.ni, 0:p.nj]
     ax.contourf(ii, jj, corr_map, np.arange(-1, 1.2, 0.1), cmap='bwr')
     g.set_axis(ax, p.ni, p.nj)
-    g.plot_wind_contour(ax, p.ni, p.nj, p.Xt, 'black', 4)
+    g.plot_wind_contour(ax, p.ni, p.nj, p.Xt, 'black', 2)
     ax.plot(iout, jout, 'k+', markersize=10)
     ax.tick_params(labelsize=15)
 
