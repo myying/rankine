@@ -38,8 +38,44 @@ def EnSRF(ni, nj, nv, Xb, iX, jX, H, iObs, jObs, obs, obserr, localize_cutoff):
 
   return X
 
+def RHF(ni, nj, nv, Xb, iX, jx, H, iObs, jObs, obs, obserr, localize_cutoff):
+  nens, nX = Xb.shape
+  nobs = obs.size
+  X = Xb.copy()
 
-def LPF(ni, nj, nv, Xb, iX, jX, H, iObs, jObs, obs, obserr, localize_cutoff, alpha):
+  for p in range(nobs):
+    h = H[p, :]
+    yo = obs[p]
+    hX = np.matmul(h, X.T)
+    Xm = np.mean(X, axis=0)
+    Xp = X - np.tile(Xm, (nens, 1))
+    hXm = np.mean(hX)
+    hXp = hX - hXm
+
+    innov = yo - hXm
+    varo = obserr**2
+    varb = np.sum(hXp**2) / (nens - 1)
+    cov = np.sum(Xp * np.tile(hXp, (nX, 1)).T, axis=0) / (nens - 1)
+
+    dist = np.sqrt((iX - iObs[p])**2 + (jX - jObs[p])**2)
+    loc = localize.GC(dist, localize_cutoff)
+    loc1 = np.zeros((ni*nj*nv,))
+    for v in range(nv):
+      loc1[v*ni*nj:(v+1)*ni*nj] = loc
+    gain = loc1 * cov / (varo + varb)
+    srf = 1.0 / (1.0 + np.sqrt(varo / (varo + varb)))
+
+    Xm = Xm + gain * innov
+    for n in range(nens):
+      Xp[n, :] = Xp[n, :] - srf * gain * hXp[n]
+    X = Xp + np.tile(Xm, (nens, 1))
+
+    print('{:-4d} ({:4.1f},{:4.1f}) yo={:6.2f} hxm={:6.2f} varb={:6.2f}'.format(p+1, iObs[p], jObs[p], obs[p], hXm, varb))
+
+  return X
+
+
+def LPF(ni, nj, nv, Xb, iX, jX, H, iObs, jObs, obs, obserr, localize_cutoff):
   nens, nX = Xb.shape
   nobs = obs.size
   X = Xb.copy()
