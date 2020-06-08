@@ -1,15 +1,23 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from netCDF4 import Dataset
+import rankine_vortex as rv
 
-
-def plot_wind_contour(ax, ni, nj, X, lcolor, lwidth):
-  u = np.reshape(X[0:ni*nj], (ni, nj))
-  # v = np.reshape(X[ni*nj:2*ni*nj], (ni, nj))
-  # wspd = np.sqrt(u**2 + v**2)
+def plot_contour(ax, ni, nj, X, lcolor, lwidth):
   x, y = np.mgrid[0:ni, 0:nj]
-  # ax.contour(x, y, wspd, (15,), colors=lcolor, linewidths=lwidth)
-  ax.contour(x, y, u, (-15, 15), colors=lcolor, linewidths=lwidth)
+  u = np.reshape(X[0:ni*nj], (ni, nj))
+  v = np.reshape(X[ni*nj:2*ni*nj], (ni, nj))
+
+  ##plot wind component
+  # ax.contour(x, y, u, (-15, 15), colors=lcolor, linewidths=lwidth)
+
+  ##plot wind spead
+  # wspd = rv.uv2wspd(u, v)
+  # ax.contour(x, y, wspd, (30,), colors=lcolor, linewidths=lwidth)
+
+  ##plot wind component
+  zeta = rv.uv2zeta(u, v)
+  ax.contour(x, y, zeta, (0.5,), colors=lcolor, linewidths=lwidth)
 
 
 def plot_obs(ax, obsi, obsj, obs):

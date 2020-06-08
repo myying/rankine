@@ -7,11 +7,9 @@ def make_coords(ni, nj):
   jX = np.reshape(jj, (ni*nj,))
   return iX, jX
 
-
 def make_state(ni, nj, nv, iStorm, jStorm, Rmw, Vmax, Vout):
   iX, jX = make_coords(ni, nj)
   dist = np.sqrt((iX - iStorm)**2 + (jX - jStorm)**2)
-
   ####wind profile
   wspd = np.zeros((ni*nj,))
   ind = np.where(dist <= Rmw)
@@ -19,21 +17,17 @@ def make_state(ni, nj, nv, iStorm, jStorm, Rmw, Vmax, Vout):
   ind = np.where(dist > Rmw)
   wspd[ind] = (Vmax - Vout) * Rmw / dist[ind] * np.exp(-(dist[ind] - Rmw)**2/200) + Vout
   wspd[np.where(dist==0)] = 0
-
   dist[np.where(dist==0)] = 1e-10
-
   X = np.zeros((ni*nj*nv,))
   X[0:ni*nj] = -wspd * (jX - jStorm) / dist  # u component
   X[ni*nj:2*ni*nj] = wspd * (iX - iStorm) / dist  # v component
   return X
-
 
 def location_operator(iX, jX, iObs, jObs):
   nobs = iObs.size
   nX = iX.size
   L = np.zeros((nobs, nX))
   for p in range(nobs):
-    # L[p, :] = np.logical_and(iX==iObs[p], jX==jObs[p])
     io = int(iObs[p])
     jo = int(jObs[p])
     di = iObs[p] - io
@@ -45,7 +39,20 @@ def location_operator(iX, jX, iObs, jObs):
   return L
 
 
-def obs_operator(iX, jX, nv, iObs, jObs, iSite, jSite):
+##direct observation of u,v
+# def obs_operator(iX, jX, nv, iObs, jObs, vObs):
+#   nobs = iObs.size
+#   nX = iX.size
+#   L = location_operator(iX, jX, iObs, jObs)
+#   H = np.zeros((nobs, nX*nv))
+#   for p in range(nobs):
+#     H[p, vObs[p]*nX:(vObs[p]+1)*nX] = L[p, :]
+#   return H
+
+##radial velocity
+def obs_operator(iX, jX, nv, iObs, jObs, vObs):
+  iSite = 2
+  jSite = 2 ##location of radar site
   nobs = iObs.size
   nX = iX.size
   L = location_operator(iX, jX, iObs, jObs)
@@ -54,9 +61,8 @@ def obs_operator(iX, jX, nv, iObs, jObs, iSite, jSite):
   rX[np.where(rX==0)] = 1e-10
   for p in range(nobs):
     l = L[p, :]
-    # H[p, 0:nX] = l * (np.matmul(l, iX) - iSite) / np.matmul(l, rX)    # u*(i-iSite)/r
-    # H[p, nX:2*nX] = l * (np.matmul(l, jX) - jSite) / np.matmul(l, rX) # v*(j-jSite)/r
-    H[p, 0:nX] = l
+    H[p, 0:nX] = l * (np.matmul(l, iX) - iSite) / np.matmul(l, rX)    # u*(i-iSite)/r
+    H[p, nX:2*nX] = l * (np.matmul(l, jX) - jSite) / np.matmul(l, rX) # v*(j-jSite)/r
   return H
 
 

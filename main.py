@@ -4,38 +4,36 @@ import rankine_vortex as rv
 import graphics as g
 import matplotlib.pyplot as plt
 import data_assimilation as DA
+import sys
 
-np.random.seed(1)  # fix random number seed, make results predictable
+np.random.seed(0)  # fix random number seed, make results predictable
 
 ni = 128  # number of grid points i, j directions
 nj = 128
 nv = 2   # number of variables, (u, v)
-nens = 100  # ensemble size
-nens_show = 10
+nens = 200  # ensemble size
+nens_show = 20
 
 ### Rankine Vortex definition, truth
-Rmw = 5    # radius of maximum wind
-Vmax = 30   # maximum wind speed
-Vout = 0    # wind speed outside of vortex
-iStorm = 20 # location of vortex in i, j
-jStorm = 20
-loc_sprd = 0.5
+Rmw = 15    # radius of maximum wind
+Vmax = 50   # maximum wind speed
+Vout = 10    # wind speed outside of vortex
+iStorm = 63 # location of vortex in i, j
+jStorm = 63
 
-nobs = 1   # number of observations
-obserr = 1.0 # observation error spread
-localize_cutoff = 9999  # localization cutoff distance (taper to zero)
+filter_kind = sys.argv[1] #'EnSRF'
+localize_cutoff = 30
 
 iX, jX = rv.make_coords(ni, nj)
-
 Xt = rv.make_state(ni, nj, nv, iStorm, jStorm, Rmw, Vmax, Vout)
 
 ##Prior ensemble
-Xb = np.zeros((nens, ni*nj*nv))
-Csprd = loc_sprd*Rmw
+Csprd = 10
 iBias = 0
 jBias = 0
 Rsprd = 0
 Vsprd = 0
+Xb = np.zeros((nens, ni*nj*nv))
 iStorm_ens = np.zeros(nens)
 jStorm_ens = np.zeros(nens)
 for n in range(nens):
@@ -47,38 +45,45 @@ for n in range(nens):
   Xb[n, :] = rv.make_state(ni, nj, nv, iStorm_ens[n], jStorm_ens[n], Rmw_n, Vmax_n, Vout_n)
 
 ###observations
-iObs = np.random.uniform(0, ni, size=nobs)
-jObs = np.random.uniform(0, nj, size=nobs)
+# iObs = np.random.uniform(0, nj, size=nobs*nv)
+# iObs = np.array([50, 50])
+# jObs = np.array([75, 75])
+# vObs = np.array([0, 1])
+iObs = np.array([50])
+jObs = np.array([75])
+vObs = np.array([0])
+nobs = iObs.size   # number of observation points
+obserr = 1 # observation error spread
 L = rv.location_operator(iX, jX, iObs, jObs)
-iSite = 2
-jSite = 2
-H = rv.obs_operator(iX, jX, nv, iObs, jObs, iSite, jSite)
+H = rv.obs_operator(iX, jX, nv, iObs, jObs, vObs)
 obs = np.matmul(H, Xt) + np.random.normal(0.0, obserr, nobs)
 
 ##filter
-nens, nX = Xb.shape
-x_in = 17
-y_in = 29
-iout = np.array([x_in])
-jout = np.array([y_in])
-H = rv.obs_operator(iX,jX,nv, iout, jout,iSite,jSite)
-obs = np.matmul(H,Xt) + np.random.normal(0.0,obserr)
-Xa = DA.LPF(ni,nj,nv,Xb,iX,jX, H, iout, jout, obs,obserr,localize_cutoff)
+Xa = Xb.copy()
+if filter_kind == 'EnSRF':
+  Xa = DA.EnSRF(ni, nj, nv, Xb, iX, jX, H, iObs, jObs, vObs, obs, obserr, localize_cutoff)
+if filter_kind == 'PF':
+  Xa = DA.PF(ni, nj, nv, Xb, iX, jX, H, iObs, jObs, vObs, obs, obserr, localize_cutoff)
+if filter_kind == 'EnSRF_MSA':
+
+  Xa = DA.EnSRF(ni, nj, nv, Xb, iX, jX, H, iObs, jObs, vObs, obs, obserr, localize_cutoff)
 
 ##diagnose & plot
-plt.switch_backend('Agg')
-plt.figure(figsize=(3, 3))
+# plt.switch_backend('Agg')
+plt.figure(figsize=(5, 5))
 ax = plt.subplot(1, 1, 1)
 # ax.scatter(iStorm_ens,jStorm_ens, s=3, color='.7')
-g.plot_wind_contour(ax, ni, nj, Xt, 'black', 2)
 cmap = [plt.cm.jet(x) for x in np.linspace(0, 1,nens_show)]
 for n in range(nens_show):
   # ax.scatter(iStorm_ens[n],jStorm_ens[n], s=40, color=[cmap[n][0:3]])
-  # g.plot_wind_contour(ax,ni,nj,Xb[n, :], [cmap[n][0:3]], 2)
-  g.plot_wind_contour(ax,ni,nj, Xa[n, :], [cmap[n][0:3]], 2)
+  g.plot_contour(ax,ni,nj, Xa[n, :], [cmap[n][0:3]], 1)
+g.plot_contour(ax, ni, nj, Xt, 'black', 3)
+ax.plot(iObs, jObs, 'kx')
 g.set_axis(ax,ni,nj)
-# ax.tick_params(labelsize=15)
+ax.tick_params(labelsize=15)
+g.output_ens('1.nc', ni, nj, Xa, Xt)
 
-plt.savefig('ens.png', dpi=100)
+# plt.savefig('ens.png', dpi=100)
+plt.show()
 
 
