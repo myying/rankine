@@ -8,8 +8,10 @@ import matplotlib.pyplot as plt
 
 plt.switch_backend('Agg')
 
-for x_in in range(41):
-  for y_in in range(41):
+# for x_in in range(41):
+  # for y_in in range(41):
+for x_in in [17]:
+  for y_in in [29]:
     iout = np.array([x_in])
     jout = np.array([y_in])
 
