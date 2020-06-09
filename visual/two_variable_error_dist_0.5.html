@@ -1,0 +1,45 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>Rankine Vortex: Related error distribution of two locations</title>
+<style>
+body{
+  width: 1100px;
+  height: 800px;
+  position: fixed;
+  padding: 0;
+  margin: 0;
+}
+div {
+  margin: 0;
+  padding: 0;
+  float: left;
+  text-align: center;
+  font-size: 12px;
+}
+#trackpad {
+  cursor: crosshair;
+}
+</style>
+</head>
+<body>
+  <div id="trackpad" onmousemove="showCoords(event)" style="width:300px;height:300px;"><img id="corr_map" width="110%" src="loc_sprd_0.5/error_correlation/17_29.png"/></div>
+  <div style="width:450px"><img id="error_dist1" width="110%" src="loc_sprd_0.5/error_distribution_prior/17_29.png"/></div>
+  <div style="width:300px"><img id="ens" width="110%" src="loc_sprd_0.5/ens.png"/></div>
+  <div style="width:300px"><img id="error_dist2" width="110%" src="loc_sprd_0.5/error_distribution2_prior/17_29.png"/></div>
+  <div style="width:450px"><img id="error_scatter" width="110%" src="loc_sprd_0.5/error_scatter_prior/17_29.png"/></div>
+</body>
+
+  <script type="text/javascript">
+    function showCoords(event) {
+      var x = Math.round((event.clientX-39)/(294-39)*40);
+      var y = Math.round(40-(event.clientY-37)/(298-37)*40);
+      var coords = "(" + x + ", " + y +")";
+      if(x>=0 && x<40 && y>=0 && y<40) {
+        document.getElementById("error_dist2").src = "loc_sprd_0.5/error_distribution2_prior/" + x + "_" + y + ".png";
+        document.getElementById("error_scatter").src = "loc_sprd_0.5/error_scatter_prior/" + x + "_" + y + ".png";
+      }
+    }
+  </script>
+
+</html>

@@ -1,0 +1,58 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>Rankine Vortex: Error correlation map</title>
+<style>
+body{
+  width: 950px;
+  position: fixed;
+  padding: 0;
+  margin: 0;
+}
+div {
+  width: 300px;
+  height: 300px;
+  margin: 0;
+  padding: 0;
+  float: left;
+  text-align: center;
+  font-size: 18px;
+}
+#trackpad {
+  cursor: crosshair;
+}
+</style>
+</head>
+<body>
+  <div id="trackpad" onmousemove="showCoords(event)"><img width="110%" src="loc_sprd_0.1/ens.png"/></div>
+  <div><img width="110%" src="loc_sprd_0.5/ens.png"/></div>
+  <div><img width="110%" src="loc_sprd_1.5/ens.png"/></div>
+  <div><img id="corr_map1" width="110%" src="loc_sprd_0.1/error_correlation/20_20.png"/></div>
+  <div><img id="corr_map2" width="110%" src="loc_sprd_0.5/error_correlation/20_20.png"/></div>
+  <div><img id="corr_map3" width="110%" src="loc_sprd_1.5/error_correlation/20_20.png"/></div>
+  <div><img id="error_dist1" width="110%" src="loc_sprd_0.1/error_distribution/20_20.png"/></div>
+  <div><img id="error_dist2" width="110%" src="loc_sprd_0.5/error_distribution_prior/20_20.png"/></div>
+  <div><img id="error_dist3" width="110%" src="loc_sprd_1.5/error_distribution/20_20.png"/></div>
+  <div style="width:250px;height:30px;position:fixed;top:2px;left:42px;">Use cursor to set observation location in this panel:</div>
+  <div style="width:250px;height:50px;position:fixed;top:2px;left:900px;">From left to right: Location spread = 0.1, 0.5, and 1.5 RMW<br/><br/>U-wind field of the true vortex (black), center positions of 1000 member vortices (gray) with first 8 member highlighted with colors.</div>
+  <div style="width:250px;height:50px;position:fixed;top:360px;left:900px;">Correlation (blue to red as -1 to 1) between observed location (at "+") and the other locations in the domain.</div>
+  <div style="width:250px;height:50px;position:fixed;top:630px;left:900px;">Error distribution at the observed location "+", ensemble estimated (black) and Gaussian approximation (red dotted).</div>
+</body>
+
+  <script type="text/javascript">
+    function showCoords(event) {
+      var x = Math.round((event.clientX-39)/(294-39)*40);
+      var y = Math.round(40-(event.clientY-37)/(298-37)*40);
+      var coords = "(" + x + ", " + y +")";
+      if(x>=0 && x<40 && y>=0 && y<40) {
+        document.getElementById("corr_map1").src = "loc_sprd_0.1/error_correlation/" + x + "_" + y + ".png";
+        document.getElementById("corr_map2").src = "loc_sprd_0.5/error_correlation/" + x + "_" + y + ".png";
+        document.getElementById("corr_map3").src = "loc_sprd_1.5/error_correlation/" + x + "_" + y + ".png";
+        document.getElementById("error_dist1").src = "loc_sprd_0.1/error_distribution/" + x + "_" + y + ".png";
+        document.getElementById("error_dist2").src = "loc_sprd_0.5/error_distribution_prior/" + x + "_" + y + ".png";
+        document.getElementById("error_dist3").src = "loc_sprd_1.5/error_distribution/" + x + "_" + y + ".png";
+      }
+    }
+  </script>
+
+</html>
