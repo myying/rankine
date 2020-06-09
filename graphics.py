@@ -9,15 +9,15 @@ def plot_contour(ax, ni, nj, X, lcolor, lwidth):
   v = np.reshape(X[ni*nj:2*ni*nj], (ni, nj))
 
   ##plot wind component
-  # ax.contour(x, y, u, (-15, 15), colors=lcolor, linewidths=lwidth)
+  ax.contour(x, y, u, (-15, 15), colors=lcolor, linewidths=lwidth)
 
   ##plot wind spead
   # wspd = rv.uv2wspd(u, v)
   # ax.contour(x, y, wspd, (30,), colors=lcolor, linewidths=lwidth)
 
   ##plot wind component
-  zeta = rv.uv2zeta(u, v)
-  ax.contour(x, y, zeta, (0.5,), colors=lcolor, linewidths=lwidth)
+  # zeta = rv.uv2zeta(u, v)
+  # ax.contour(x, y, zeta, (0.1,), colors=lcolor, linewidths=lwidth)
 
 
 def plot_obs(ax, obsi, obsj, obs):
@@ -98,10 +98,10 @@ def output_ens(filename, ni, nj, Xens, Xtruth):
   for n in range(nens):
     dat[n, :, :] = np.reshape(Xens[n, 0:ni*nj], (ni, nj)).T
   dat[nens, :, :] = np.mean(dat[0:nens, :, :], axis=0)
-  dat[nens+1, :, :] = np.reshape(Xtruth[0:ni*nj], (ni, nj)).T
+  # dat[nens+1, :, :] = np.reshape(Xtruth[0:ni*nj], (ni, nj)).T
   dat = f.createVariable('v', np.float32, ('m', 'j', 'i'))
   for n in range(nens):
     dat[n, :, :] = np.reshape(Xens[n, ni*nj:2*ni*nj], (ni, nj)).T
   dat[nens, :, :] = np.mean(dat[0:nens, :, :], axis=0)
-  dat[nens+1, :, :] = np.reshape(Xtruth[ni*nj:2*ni*nj], (ni, nj)).T
+  # dat[nens+1, :, :] = np.reshape(Xtruth[ni*nj:2*ni*nj], (ni, nj)).T
   f.close()

@@ -1,5 +1,10 @@
 import numpy as np
 
+def make_dist(ni, nj, nv, iX, jX, iobs, jobs, vobs):
+  dist = np.zeros(ni*nj*nv)
+  for v in range(nv):
+    dist[v*ni*nj:(v+1)*ni*nj] = np.sqrt((iX - iobs)**2 + (jX - jobs)**2)
+  return dist
 
 def GC(dist, cutoff):
   loc = np.zeros(dist.shape)
