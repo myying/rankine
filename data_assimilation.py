@@ -97,10 +97,8 @@ def optical_flow_HS(Im1, Im2, nlevel):
 def warp(Im, u, v):
   warp_Im = Im.copy()
   ni, nj, nens = Im.shape
-  for m in range(nens):
-    for i in range(ni):
-      for j in range(nj):
-        warp_Im[i, j, m] = interp2d(Im[:, :, m], (i+u[i, j, m], j+v[i, j, m]))
+  ii, jj, mm = np.mgrid[0:ni, 0:nj, 0:nens]
+  warp_Im = interp2d(Im, ii+u, jj+v, mm)
   return warp_Im
 
 def coarsen(Im, level):
@@ -122,17 +120,15 @@ def sharpen(Im, level):
     Im = Im2
   return Im
 
-def interp2d(x, loc):
-  ni, nj = x.shape
-  io = loc[0]
-  jo = loc[1]
-  io1 = int(np.floor(io)) % ni
-  jo1 = int(np.floor(jo)) % nj
-  io2 = int(np.floor(io+1)) % ni
-  jo2 = int(np.floor(jo+1)) % nj
+def interp2d(x, io, jo, mm):
+  ni, nj, nens = x.shape
+  io1 = np.floor(io).astype(int) % ni
+  jo1 = np.floor(jo).astype(int) % nj
+  io2 = np.floor(io+1).astype(int) % ni
+  jo2 = np.floor(jo+1).astype(int) % nj
   di = io - np.floor(io)
   dj = jo - np.floor(jo)
-  xo = (1-di)*(1-dj)*x[io1, jo1] + di*(1-dj)*x[io2, jo1] + (1-di)*dj*x[io1, jo2] + di*dj*x[io2, jo2]
+  xo = (1-di)*(1-dj)*x[io1, jo1, mm] + di*(1-dj)*x[io2, jo1, mm] + (1-di)*dj*x[io1, jo2, mm] + di*dj*x[io2, jo2, mm]
   return xo
 
 def deriv_x(f):
