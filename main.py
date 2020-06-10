@@ -6,12 +6,13 @@ import matplotlib.pyplot as plt
 import data_assimilation as DA
 import sys
 
-np.random.seed(2)  # fix random number seed, make results predictable
+seed = int(sys.argv[2])
+np.random.seed(seed)  # fix random number seed, make results predictable
 
 ni = 128  # number of grid points i, j directions
 nj = 128
 nv = 2   # number of variables, (u, v)
-nens = 20  # ensemble size
+nens = 200  # ensemble size
 nens_show = nens
 
 ### Rankine Vortex definition, truth
@@ -45,7 +46,7 @@ for n in range(nens):
   Xb[n, :] = rv.make_state(ni, nj, nv, iStorm_ens[n], jStorm_ens[n], Rmw_n, Vmax_n, Vout_n)
 
 ###observations
-th = 120*np.pi/180
+th = np.random.uniform(0, 360)*np.pi/180
 io = iStorm + Rmw*np.sin(th)
 jo = iStorm + Rmw*np.cos(th)
 iObs = np.array([io, io])
@@ -75,15 +76,19 @@ if filter_kind == 'EnSRF_MSA':
     Y = np.matmul(H, X.T)
     Xsa = DA.EnSRF(ni, nj, nv, Xsb, Y, iX, jX, H, iObs, jObs, vObs, obs, obserr, localize_cutoff)
     if s < ns-1:
-      for m in range(nens):
-        for v in range(nv):
-          xb = np.reshape(Xsb[m, v*ni*nj:(v+1)*ni*nj], (ni, nj))
-          xa = np.reshape(Xsa[m, v*ni*nj:(v+1)*ni*nj], (ni, nj))
-          qu, qv = DA.optical_flow_HS(xb, xa, 5)
-          xv = np.reshape(X[m, v*ni*nj:(v+1)*ni*nj], (ni, nj))
-          xv = DA.warp(xv, -qu, -qv)
-          # xv += xa - DA.warp(xb, -qu, -qv)
-          X[m, v*ni*nj:(v+1)*ni*nj] = np.reshape(xv, (ni*nj,))
+      for v in range(nv):
+        xb = np.zeros((ni, nj, nens))
+        xa = np.zeros((ni, nj, nens))
+        xv = np.zeros((ni, nj, nens))
+        for m in range(nens):
+          xb[:, :, m] = np.reshape(Xsb[m, v*ni*nj:(v+1)*ni*nj], (ni, nj))
+          xa[:, :, m] = np.reshape(Xsa[m, v*ni*nj:(v+1)*ni*nj], (ni, nj))
+          xv[:, :, m] = np.reshape(X[m, v*ni*nj:(v+1)*ni*nj], (ni, nj))
+        qu, qv = DA.optical_flow_HS(xb, xa, 5)
+        xv = DA.warp(xv, -qu, -qv)
+        # xv += xa - DA.warp(xb, -qu, -qv)
+        for m in range(nens):
+          X[m, v*ni*nj:(v+1)*ni*nj] = np.reshape(xv[:, :, m], (ni*nj,))
     else:
       X += Xsa - Xsb
   Xa = X
@@ -104,7 +109,7 @@ ax.tick_params(labelsize=15)
 # plt.savefig('1.png', dpi=100)
 # plt.show()
 
-g.output_ens('1.nc', ni, nj, Xa, Xt)
+g.output_ens('{}_{}.nc'.format(filter_kind, seed), ni, nj, Xa, Xt)
 
 ###intensity track
 utrue, vtrue = rv.X2uv(ni, nj, Xt)

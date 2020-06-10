@@ -63,9 +63,9 @@ def PF(ni, nj, nv, Xb, Yb, iX, jX, H, iObs, jObs, vObs, obs, obserr, local_cutof
   return X
 
 def optical_flow_HS(Im1, Im2, nlevel):
-  ni, nj = Im1.shape
-  u = np.zeros((ni, nj))
-  v = np.zeros((ni, nj))
+  ni, nj, nens = Im1.shape
+  u = np.zeros((ni, nj, nens))
+  v = np.zeros((ni, nj, nens))
   for lev in range(nlevel, -1, -1):
     Im1warp = warp(Im1, -u, -v)
     Im1c = coarsen(Im1warp, lev)
@@ -96,28 +96,29 @@ def optical_flow_HS(Im1, Im2, nlevel):
 
 def warp(Im, u, v):
   warp_Im = Im.copy()
-  ni, nj = Im.shape
-  for i in range(ni):
-    for j in range(nj):
-      warp_Im[i, j] = interp2d(Im, (i+u[i, j], j+v[i, j]))
+  ni, nj, nens = Im.shape
+  for m in range(nens):
+    for i in range(ni):
+      for j in range(nj):
+        warp_Im[i, j, m] = interp2d(Im[:, :, m], (i+u[i, j, m], j+v[i, j, m]))
   return warp_Im
 
 def coarsen(Im, level):
   for k in range(level):
-    ni, nj = Im.shape
-    Im1 = 0.25*(Im[0:ni:2, :][:, 0:nj:2] + Im[1:ni:2, :][:, 0:nj:2] + Im[0:ni:2, 1:nj:2] + Im[1:ni:2, 1:nj:2])
+    ni, nj, nens = Im.shape
+    Im1 = 0.25*(Im[0:ni:2, 0:nj:2, :] + Im[1:ni:2, 0:nj:2, :] + Im[0:ni:2, 1:nj:2, :] + Im[1:ni:2, 1:nj:2, :])
     Im = Im1
   return Im
 
 def sharpen(Im, level):
   for k in range(level):
-    ni, nj = Im.shape
-    Im1 = np.zeros((ni*2, nj))
-    Im1[0:ni*2:2, :] = Im
-    Im1[1:ni*2:2, :] = 0.5*(np.roll(Im, -1, axis=0) + Im)
-    Im2 = np.zeros((ni*2, nj*2))
-    Im2[:, 0:nj*2:2] = Im1
-    Im2[:, 1:nj*2:2] = 0.5*(np.roll(Im1, -1, axis=1) + Im1)
+    ni, nj, nens = Im.shape
+    Im1 = np.zeros((ni*2, nj, nens))
+    Im1[0:ni*2:2, :, :] = Im
+    Im1[1:ni*2:2, :, :] = 0.5*(np.roll(Im, -1, axis=0) + Im)
+    Im2 = np.zeros((ni*2, nj*2, nens))
+    Im2[:, 0:nj*2:2, :] = Im1
+    Im2[:, 1:nj*2:2, :] = 0.5*(np.roll(Im1, -1, axis=1) + Im1)
     Im = Im2
   return Im
 
