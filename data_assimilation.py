@@ -39,27 +39,29 @@ def PF(ni, nj, nv, Xb, Yb, iX, jX, H, iObs, jObs, vObs, obs, obserr, local_cutof
   nobs = obs.size
   X = Xb.copy()
   Y = Yb.copy()
+  w = np.zeros(nens)
+  w[:] = 1.0 / nens
   for p in range(nobs):
     yo = obs[p]
-    hX = Y[p, :] #np.matmul(H[p, :], X.T)
-    wb = np.zeros(nens)
-    wb[:] = 1.0 / nens
-    wa = wb * np.exp( -(yo - hX)**2 / (2*obserr**2))
-    wa = wa / np.sum(wa)
-    ind = np.zeros(nens)
-    w_ind = np.argsort(wa)
-    cw = np.cumsum(wa[w_ind])
-    for m in range(nens):
-      fac = float(m+1)/float(nens+1)
-      for n in range(nens-1):
-        if (fac>cw[n] and fac<=cw[n+1]):
-          ind[m] = w_ind[n]
-    # print(ind)
-    Xtmp = X.copy()
-    Ytmp = Y.copy()
-    for m in range(nens):
-      X[m, :] = Xtmp[int(ind[m]), :]
-      Y[:, m] = Ytmp[:, int(ind[m])]
+    hX = Y[p, :]
+    w = w * np.exp( -np.abs(yo - hX)**2 / (2*obserr**2))
+  if(np.sum(w)<1e-20):
+    w[:] = 1.0 / nens
+  else:
+    w = w / np.sum(w)
+  ind = np.zeros(nens)
+  w_ind = np.argsort(w)
+  cw = np.cumsum(w[w_ind])
+  for m in range(nens):
+    fac = float(m+1)/float(nens)
+    for n in range(nens-1):
+      if (fac>cw[n] and fac<=cw[n+1]):
+        ind[m] = w_ind[n+1]
+  Xtmp = X.copy()
+  Ytmp = Y.copy()
+  for m in range(nens):
+    X[m, :] = Xtmp[int(ind[m]), :]
+    Y[:, m] = Ytmp[:, int(ind[m])]
   return X
 
 def optical_flow_HS(Im1, Im2, nlevel):
