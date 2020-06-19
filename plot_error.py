@@ -11,7 +11,7 @@ ni = 128  # number of grid points i, j directions
 nj = 128
 nv = 2   # number of variables, (u, v)
 nens = (20,) # ensemble size
-Csprd = (3,)
+Csprd = (8,)
 
 ### Rankine Vortex definition, truth
 Rmw = 5    # radius of maximum wind
@@ -41,14 +41,14 @@ ax = plt.subplot(1, 1, 1)
 for l in range(len(Csprd)):
   for n in range(len(nens)):
     for k in range(len(filter_kind)):
-      bx = ax.boxplot(rmse[:, k, n, l], positions=[(k+1)], widths=0.2, patch_artist=True)
+      bx = ax.boxplot(rmse[:, k, n, l], positions=[(k+1)], widths=0.2, patch_artist=True, sym='')
       for item in ['boxes', 'whiskers', 'medians', 'caps']:
-        plt.setp(bx[item], color='k')
+        plt.setp(bx[item], color='k', linestyle='solid')
       plt.setp(bx['boxes'], facecolor=colors[k])
 ax.set_xlim(0, 5)
 ax.set_xticks((1, 2, 3, 4))
 ax.set_xticklabels(('Prior', 'EnSRF', 'EnSRF+MSA', 'PF'))
-plt.savefig('1.pdf')
+plt.savefig('out/1.pdf')
 
 # rmse1 = np.sqrt(np.mean((np.mean(Xa, axis=0) - Xt)**2))
 # rmse2 = 0.0
