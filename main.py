@@ -60,11 +60,11 @@ for realize in range(nrealize):
   obserr = 1 # observation error spread
   L = rv.location_operator(iX, jX, iObs, jObs)
   H = rv.obs_operator(iX, jX, nv, iObs, jObs, vObs)
-  obs = np.matmul(H, Xt) + np.random.normal(0.0, obserr, nobs)
+  obs = np.dot(H, Xt) + np.random.normal(0.0, obserr, nobs)
 
   ##Run filter
   Xa[realize, :, :] = Xb.copy()
-  Yb = np.matmul(H, Xb.T)
+  Yb = np.dot(H, Xb.T)
   if filter_kind == 'EnSRF':
     Xa[realize, :, :] = DA.EnSRF(ni, nj, nv, Xb, Yb, iX, jX, H, iObs, jObs, vObs, obs, obserr, localize_cutoff)
   if filter_kind == 'PF':
@@ -77,7 +77,7 @@ for realize in range(nrealize):
       Xsb = X.copy()
       for m in range(nens):
         Xsb[m, :] = DA.get_scale(ni, nj, nv, X[m, :], krange, s)
-      Y = np.matmul(H, X.T)
+      Y = np.dot(H, X.T)
       Xsa = DA.EnSRF(ni, nj, nv, Xsb, Y, iX, jX, H, iObs, jObs, vObs, obs, obserr, localize_cutoff)
       if s < ns-1:
         for v in range(nv):
@@ -97,7 +97,7 @@ for realize in range(nrealize):
         X += Xsa - Xsb
     Xa[realize, :, :] = X
 
-np.save('/run/media/yingyue/BACKUP2020/tmp/{}_Csprd{}_N{}'.format(filter_kind, Csprd, nens), Xa)
+np.save('out/{}_Csprd{}_N{}'.format(filter_kind, Csprd, nens), Xa)
 
 ##diagnose & plot
 # plt.switch_backend('Agg')
