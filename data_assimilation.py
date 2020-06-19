@@ -45,7 +45,7 @@ def PF(ni, nj, nv, Xb, Yb, iX, jX, H, iObs, jObs, vObs, obs, obserr, local_cutof
     yo = obs[p]
     hX = Y[p, :]
     w = w * np.exp( -np.abs(yo - hX)**2 / (2*obserr**2))
-  if(np.sum(w)<1e-20):
+  if(np.sum(w)==0.0):
     w[:] = 1.0 / nens
   else:
     w = w / np.sum(w)
