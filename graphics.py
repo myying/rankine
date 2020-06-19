@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from netCDF4 import Dataset
 import rankine_vortex as rv
 
 def plot_contour(ax, ni, nj, X, lcolor, lwidth):
@@ -77,8 +76,8 @@ def smooth1d(x, smth):
 
 def set_axis(ax, ni, nj):
   ax.set_aspect('equal', 'box')
-  ax.set_xlim(0, ni-1)
-  ax.set_ylim(0, nj-1)
+  ax.set_xlim(63-20, 63+20)
+  ax.set_ylim(63-20, 63+20)
   # ax.set_xticks(np.arange(0, ni, 20))
   # ax.set_yticks(np.arange(0, nj, 20))
   ax.set_xticks([])
@@ -86,6 +85,7 @@ def set_axis(ax, ni, nj):
 
 
 def output_ens(filename, ni, nj, Xens, Xtruth):
+  from netCDF4 import Dataset
   import os
   nens, nX = Xens.shape
   if os.path.exists(filename):
