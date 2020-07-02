@@ -52,11 +52,12 @@ def PF(ni, nj, nv, Xb, Yb, iX, jX, H, iObs, jObs, vObs, obs, obserr, local_cutof
   ind = np.zeros(nens)
   w_ind = np.argsort(w)
   cw = np.cumsum(w[w_ind])
-  for m in range(nens):
+  for m in range(nens-1):
     fac = float(m+1)/float(nens)
     for n in range(nens-1):
       if (fac>cw[n] and fac<=cw[n+1]):
         ind[m] = w_ind[n+1]
+  ind[-1] = w_ind[-1]
   Xtmp = X.copy()
   Ytmp = Y.copy()
   for m in range(nens):

@@ -6,13 +6,19 @@ import matplotlib.pyplot as plt
 import data_assimilation as DA
 import sys
 
-filter_kind = sys.argv[1] #'EnSRF'
-localize_cutoff = 0
+if (len(sys.argv)<6):
+  print("usage: python main.py filter_kind nens Csprd obsR obsErr")
+  exit()
 
 ni = 128  # number of grid points i, j directions
 nj = 128
 nv = 2   # number of variables, (u, v)
+filter_kind = sys.argv[1] #'EnSRF'
 nens = int(sys.argv[2]) # ensemble size
+Csprd = int(sys.argv[3])
+obsR = int(sys.argv[4])
+obserr = int(sys.argv[5]) # observation error spread
+localize_cutoff = 0
 
 ### Rankine Vortex definition, truth
 Rmw = 5    # radius of maximum wind
@@ -32,7 +38,6 @@ for realize in range(nrealize):
   np.random.seed(realize)  # fix random number seed, make results predictable
 
   ##Prior ensemble
-  Csprd = int(sys.argv[3])
   iBias = 0
   jBias = 0
   Rsprd = 0
@@ -50,15 +55,13 @@ for realize in range(nrealize):
 
   ###Observations
   th = np.random.uniform(0, 360)*np.pi/180
-  io = iStorm + Rmw*np.sin(th)
-  jo = iStorm + Rmw*np.cos(th)
+  io = iStorm + obsR*np.sin(th)
+  jo = iStorm + obsR*np.cos(th)
   # print(io, jo)
   iObs = np.array([io, io])
   jObs = np.array([jo, jo])
   vObs = np.array([0, 1])
   nobs = iObs.size   # number of observation points
-  obserr = 1 # observation error spread
-  L = rv.location_operator(iX, jX, iObs, jObs)
   H = rv.obs_operator(iX, jX, nv, iObs, jObs, vObs)
   obs = np.dot(H, Xt) + np.random.normal(0.0, obserr, nobs)
 
@@ -90,28 +93,11 @@ for realize in range(nrealize):
             xv[:, :, m] = np.reshape(X[m, v*ni*nj:(v+1)*ni*nj], (ni, nj))
           qu, qv = DA.optical_flow_HS(xb, xa, 5)
           xv = DA.warp(xv, -qu, -qv)
-          # xv += xa - DA.warp(xb, -qu, -qv)
+          xv += xa - DA.warp(xb, -qu, -qv)
           for m in range(nens):
             X[m, v*ni*nj:(v+1)*ni*nj] = np.reshape(xv[:, :, m], (ni*nj,))
       else:
         X += Xsa - Xsb
     Xa[realize, :, :] = X
 
-np.save('out/{}_Csprd{}_N{}'.format(filter_kind, Csprd, nens), Xa)
-
-##diagnose & plot
-# plt.switch_backend('Agg')
-# plt.figure(figsize=(5, 5))
-# ax = plt.subplot(1, 1, 1)
-# # ax.scatter(iStorm_ens,jStorm_ens, s=3, color='.7')
-# cmap = [plt.cm.jet(x) for x in np.linspace(0, 1,nens)]
-# for n in range(nens):
-#   # ax.scatter(iStorm_ens[n],jStorm_ens[n], s=40, color=[cmap[n][0:3]])
-#   g.plot_contour(ax,ni,nj, Xa[n, :], [cmap[n][0:3]], 1)
-# g.plot_contour(ax, ni, nj, Xt, 'black', 3)
-# ax.plot(iObs, jObs, 'kx')
-# g.set_axis(ax,ni,nj)
-# ax.tick_params(labelsize=15)
-# # plt.savefig('1.png', dpi=100)
-# plt.show()
-
+np.save('out/{}_Csprd{}_N{}_obsR{}.npy'.format(filter_kind, Csprd, nens, obsR), Xa)
