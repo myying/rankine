@@ -60,7 +60,7 @@ Xa[0, :, :] = Xb
 
 Xa[1, :, :] = DA.EnSRF(ni, nj, nv, Xb, Yb, iX, jX, H, iObs, jObs, vObs, obs, obserr, 0)
 
-ns = 2
+ns = 8
 krange = np.arange(1, ns+1)
 Xa[2, :, :] = DA.MSA(ni, nj, nv, Xb, iX, jX, H, iObs, jObs, vObs, obs, obserr, 0, krange, 'EnSRF')
 
