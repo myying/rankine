@@ -23,12 +23,19 @@ def make_state(ni, nj, nv, iStorm, jStorm, Rmw, Vmax, Vout):
   return X
 
 ####vortex with gauss vorticity and background flow
-def make_state1(ni, nj, nv, dx, iStorm, jStorm, Rmw):
+def make_vortex(ni, nj, nv, dx, iStorm, jStorm, Rmw):
+  ii, jj = np.mgrid[0:ni, 0:nj]
+  zeta = 1e-3*np.exp(-((ii-iStorm)**2+(jj-jStorm)**2)/(2.0*Rmw**2))
+  u, v = zeta2uv(zeta, dx)
+  X = np.zeros((ni*nj*nv,))
+  X[0:ni*nj] += np.reshape(u, (ni*nj,))
+  X[ni*nj:2*ni*nj] += np.reshape(v, (ni*nj,))
+  return X
+
+def make_background_flow(ni, nj, nv, dx):
   power_law = -3
   pk = lambda k: k**((power_law-1)/2)
   zeta = 1e-4*gaussian_random_field(pk, ni)
-  ii, jj = np.mgrid[0:ni, 0:nj]
-  zeta += 1e-3*np.exp(-((ii-iStorm)**2+(jj-jStorm)**2)/(2.0*Rmw**2))
   u, v = zeta2uv(zeta, dx)
   X = np.zeros((ni*nj*nv,))
   X[0:ni*nj] += np.reshape(u, (ni*nj,))
@@ -36,15 +43,29 @@ def make_state1(ni, nj, nv, dx, iStorm, jStorm, Rmw):
   return X
 
 def X2uv(ni, nj, X):
-  u = np.reshape(X[0:ni*nj], (ni, nj))
-  v = np.reshape(X[ni*nj:2*ni*nj], (ni, nj))
+  if X.ndim==1:
+      u = np.reshape(X[0:ni*nj], (ni, nj))
+      v = np.reshape(X[ni*nj:2*ni*nj], (ni, nj))
+  if X.ndim==2:
+    nX, nens = X.shape
+    u = np.zeros((ni, nj, nens))
+    v = np.zeros((ni, nj, nens))
+    for m in range(nens):
+      u[:, :, m] = np.reshape(X[0:ni*nj, m], (ni, nj))
+      v[:, :, m] = np.reshape(X[ni*nj:2*ni*nj, m], (ni, nj))
   return u, v
 
 def uv2X(u, v):
-  ni, nj = u.shape
-  X = np.zeros(ni*nj*2)
-  X[0:ni*nj] = np.reshape(u, (ni*nj,))
-  X[ni*nj:2*ni*nj] = np.reshape(v, (ni*nj,))
+  if u.ndim==2:
+    X = np.zeros((ni*nj*2))
+    X[0:ni*nj] = np.reshape(u, (ni*nj,))
+    X[ni*nj:2*ni*nj] = np.reshape(v, (ni*nj,))
+  if u.ndim==3:
+    ni, nj, nens = u.shape
+    X = np.zeros((ni*nj*2, nens))
+    for m in range(nens):
+      X[0:ni*nj, m] = np.reshape(u[:, :, m], (ni*nj,))
+      X[ni*nj:2*ni*nj, m] = np.reshape(v[:, :, m], (ni*nj,))
   return X
 
 ##model forward step, RK4 CS
@@ -100,24 +121,17 @@ def obs_operator(iX, jX, nv, iObs, jObs, vObs):
   L = location_operator(iX, jX, iObs, jObs)
   H = np.zeros((nobs, nX*nv))
   for p in range(nobs):
-    H[p, vObs[p]*nX:(vObs[p]+1)*nX] = L[p, :]
+    if vObs[p] == 0 or vObs[p] == 1:
+      H[p, vObs[p]*nX:(vObs[p]+1)*nX] = L[p, :]
+    if vObs[p] == 99:
+      ##radial velocity
+      iSite = 62
+      jSite = 62 ##location of radar site
+      rX = np.sqrt((iX - iSite)**2 + (jX - jSite)**2)
+      rX[np.where(rX==0)] = 1e-10
+      H[p, 0:nX] = L * (np.dot(L, iX) - iSite) / np.dot(L, rX)    # u*(i-iSite)/r
+      H[p, nX:2*nX] = L * (np.dot(L, jX) - jSite) / np.dot(L, rX) # v*(j-jSite)/r
   return H
-
-##radial velocity
-# def obs_operator(iX, jX, nv, iObs, jObs, vObs):
-#   iSite = 2
-#   jSite = 2 ##location of radar site
-#   nobs = iObs.size
-#   nX = iX.size
-#   L = location_operator(iX, jX, iObs, jObs)
-#   H = np.zeros((nobs, nX*nv))
-#   rX = np.sqrt((iX - iSite)**2 + (jX - jSite)**2)
-#   rX[np.where(rX==0)] = 1e-10
-#   for p in range(nobs):
-#     l = L[p, :]
-#     H[p, 0:nX] = l * (np.matmul(l, iX) - iSite) / np.matmul(l, rX)    # u*(i-iSite)/r
-#     H[p, nX:2*nX] = l * (np.matmul(l, jX) - jSite) / np.matmul(l, rX) # v*(j-jSite)/r
-#   return H
 
 ###some convertors
 def uv2vr(u, v):

@@ -34,6 +34,61 @@ def EnSRF(ni, nj, nv, Xb, Yb, iX, jX, H, iObs, jObs, vObs, obs, obserr, local_cu
     # print('{:-4d} ({:4.1f},{:4.1f}) yo={:6.2f} hxm={:6.2f} varb={:6.2f}'.format(p+1, iObs[p], jObs[p], obs[p], hXm, varb))
   return X
 
+def EnKF(ni, nj, nv, Xb, Yb, iX, jX, H, iObs, jObs, vObs, obs, obserr, local_cutoff):
+  nens, nX = Xb.shape
+  nobs = obs.size
+  X = Xb.copy()
+  Y = Yb.copy()
+  for p in range(nobs):
+    Xm = np.mean(X, axis=0)
+    Xp = X - np.tile(Xm, (nens, 1))
+    Ym = np.mean(Y, axis=1)
+    Yp = Y - np.tile(Ym, (nens, 1)).T
+    yo = obs[p] + np.random.normal(0, obserr, (nens))
+    hX = Y[p, :]
+    hXm = np.mean(hX)
+    hXp = hX - hXm
+    varo = obserr**2
+    varb = np.sum(hXp**2) / (nens - 1)
+    dist = localize.make_dist(ni, nj, nv, iX, jX, iObs[p], jObs[p], vObs[p])
+    loc = localize.GC(dist, local_cutoff)
+    gain = loc * np.sum(Xp * np.tile(hXp, (nX, 1)).T, axis=0) / (nens - 1) / (varo + varb)
+    for n in range(nens):
+      X[n, :] = X[n, :] + gain * (yo[n] - hX[n])
+    gain1 = np.sum(Yp * np.tile(hXp, (nobs, 1)), axis=1) / (nens - 1) / (varo + varb)
+    for n in range(nens):
+      Y[:, n] = Y[:, n] + gain1 * (yo[n] - hX[n])
+  return X
+
+def MSA(ni, nj, nv, Xb, iX, jX, H, iObs, jObs, vObs, obs, obserr, local_cutoff, krange, filter_kind):
+  nens, nX = Xb.shape
+  X = Xb.copy()
+  ns = len(krange)
+  for s in range(ns):
+    Xsb = X.copy()
+    for m in range(nens):
+      Xsb[m, :] = get_scale(ni, nj, nv, X[m, :], krange, s)
+    Y = np.dot(H, X.T)
+    if filter_kind == 'EnSRF':
+      Xsa = EnSRF(ni, nj, nv, Xsb, Y, iX, jX, H, iObs, jObs, vObs, obs, obserr, local_cutoff)
+    if s < ns-1:
+      for v in range(nv):
+        xb = np.zeros((ni, nj, nens))
+        xa = np.zeros((ni, nj, nens))
+        xv = np.zeros((ni, nj, nens))
+        for m in range(nens):
+          xb[:, :, m] = np.reshape(Xsb[m, v*ni*nj:(v+1)*ni*nj], (ni, nj))
+          xa[:, :, m] = np.reshape(Xsa[m, v*ni*nj:(v+1)*ni*nj], (ni, nj))
+          xv[:, :, m] = np.reshape(X[m, v*ni*nj:(v+1)*ni*nj], (ni, nj))
+        qu, qv = optical_flow_HS(xb, xa, 5)
+        xv = warp(xv, -qu, -qv)
+        xv += xa - warp(xb, -qu, -qv)
+        for m in range(nens):
+          X[m, v*ni*nj:(v+1)*ni*nj] = np.reshape(xv[:, :, m], (ni*nj,))
+    else:
+      X += Xsa - Xsb
+  return X
+
 def PF(ni, nj, nv, Xb, Yb, iX, jX, H, iObs, jObs, vObs, obs, obserr, local_cutoff):
   nens, nX = Xb.shape
   nobs = obs.size
@@ -58,6 +113,7 @@ def PF(ni, nj, nv, Xb, Yb, iX, jX, H, iObs, jObs, vObs, obs, obserr, local_cutof
       if (fac>cw[n] and fac<=cw[n+1]):
         ind[m] = w_ind[n+1]
   ind[-1] = w_ind[-1]
+  # print(ind)
   Xtmp = X.copy()
   Ytmp = Y.copy()
   for m in range(nens):
