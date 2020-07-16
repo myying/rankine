@@ -23,7 +23,7 @@ Xt = rv.make_state(ni, nj, nv, iStorm, jStorm, Rmw, Vmax, Vout)
 np.random.seed(9)
 
 ##Prior ensemble
-Csprd = 3.0
+Csprd = 5.0
 iBias = 0
 jBias = 0
 Rsprd = 0
@@ -40,8 +40,10 @@ for n in range(nens):
   Xb[n, :] = rv.make_state(ni, nj, nv, iStorm_ens[n], jStorm_ens[n], Rmw_n, Vmax_n, Vout_n)
 
 ###Observations
-iObs = np.array([66.53, 66.53])
-jObs = np.array([66.53, 66.53])
+#iObs = np.array([66.53, 66.53])
+#jObs = np.array([66.53, 66.53])
+iObs = np.array([66, 66])
+jObs = np.array([63, 63])
 vObs = np.array([0, 1])
 nobs = iObs.size   # number of observation points
 obserr = 4.0 # observation error spread
@@ -58,7 +60,7 @@ Xa1 = np.zeros((2, nens, ni*nj*nv))
 Xa1[0, :, :] = DA.EnSRF(ni, nj, nv, Xb, np.dot(H[0:1, :], Xb.T), iX, jX, H[0:1, :], iObs[0:1], jObs[0:1], vObs[0:1], obs[0:1], obserr, 0)
 Xa1[1, :, :] = DA.EnSRF(ni, nj, nv, Xa1[0, :, :], np.dot(H[1:2, :], Xa1[0, :, :].T), iX, jX, H[1:2, :], iObs[1:2], jObs[1:2], vObs[1:2], obs[1:2], obserr, 0)
 
-ns = 8
+ns = 4
 krange = np.arange(1, ns+1)
 Xa2 = np.zeros((ns, nens, ni*nj*nv))
 ns = len(krange)

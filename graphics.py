@@ -76,12 +76,12 @@ def smooth1d(x, smth):
 
 def set_axis(ax, ni, nj):
   ax.set_aspect('equal', 'box')
-  ax.set_xlim(63-20, 63+20)
-  ax.set_ylim(63-20, 63+20)
-  # ax.set_xticks(np.arange(0, ni, 20))
-  # ax.set_yticks(np.arange(0, nj, 20))
-  ax.set_xticks([])
-  ax.set_yticks([])
+  # ax.set_xlim(63-20, 63+20)
+  # ax.set_ylim(63-20, 63+20)
+  ax.set_xticks(np.arange(0, ni, 20))
+  ax.set_yticks(np.arange(0, nj, 20))
+  # ax.set_xticks([])
+  # ax.set_yticks([])
 
 
 def output_ens(filename, ni, nj, Xens, Xtruth):

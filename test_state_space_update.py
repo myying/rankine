@@ -7,7 +7,7 @@ import data_assimilation as DA
 ni = 128  # number of grid points i, j directions
 nj = 128
 nv = 2   # number of variables, (u, v)
-nens = 80 # ensemble size
+nens = 280 # ensemble size
 
 ### Rankine Vortex definition, truth
 Rmw = 5    # radius of maximum wind
@@ -23,7 +23,7 @@ Xt = rv.make_state(ni, nj, nv, iStorm, jStorm, Rmw, Vmax, Vout)
 np.random.seed(9)
 
 ##Prior ensemble
-Csprd = 3.0
+Csprd = 5.0
 iBias = 0
 jBias = 0
 Rsprd = 0
@@ -40,8 +40,10 @@ for n in range(nens):
   Xb[n, :] = rv.make_state(ni, nj, nv, iStorm_ens[n], jStorm_ens[n], Rmw_n, Vmax_n, Vout_n)
 
 ###Observations
-iObs = np.array([66.53, 66.53])
-jObs = np.array([66.53, 66.53])
+iObs = np.array([63, 63])
+jObs = np.array([65, 65])
+# iObs = np.array([66.53, 66.53])
+# jObs = np.array([66.53, 66.53])
 vObs = np.array([0, 1])
 nobs = iObs.size   # number of observation points
 obserr = 4.0 # observation error spread
@@ -55,16 +57,10 @@ Hout = rv.obs_operator(iX, jX, nv, iout, jout, vout)
 
 ##Run filter
 Xa = np.zeros((4, nens, ni*nj*nv))
-Yb = np.dot(H, Xb.T)
 Xa[0, :, :] = Xb
-
-Xa[1, :, :] = DA.EnSRF(ni, nj, nv, Xb, Yb, iX, jX, H, iObs, jObs, vObs, obs, obserr, 0)
-
-ns = 8
-krange = np.arange(1, ns+1)
-Xa[2, :, :] = DA.MSA(ni, nj, nv, Xb, iX, jX, H, iObs, jObs, vObs, obs, obserr, 0, krange, 'EnSRF')
-
-Xa[3, :, :] = DA.PF(ni, nj, nv, Xb, Yb, iX, jX, H, iObs, jObs, vObs, obs, obserr, 0)
+Xa[1, :, :] = DA.filter_update(ni, nj, nv, Xb, iX, jX, H, iObs, jObs, vObs, obs, obserr, 0, np.arange(1, 2), 'EnSRF')
+Xa[2, :, :] = DA.filter_update(ni, nj, nv, Xb, iX, jX, H, iObs, jObs, vObs, obs, obserr, 0, np.arange(1, 2), 'EnSRF')
+Xa[3, :, :] = DA.filter_update(ni, nj, nv, Xb, iX, jX, H, iObs, jObs, vObs, obs, obserr, 0, np.arange(1, 2), 'PF')
 
 ##plot
 plt.switch_backend('Agg')
@@ -72,12 +68,13 @@ plt.figure(figsize=(7, 7))
 ii, jj = np.mgrid[0:ni, 0:nj]
 cmap = [plt.cm.jet(m) for m in np.linspace(0.2, 0.8, nens)]
 
-title=('(a) Prior', '(b) EnSRF', '(c) EnSRF_MSA_8', '(d) PF')
 for i in range(4):
   ax = plt.subplot(2, 2, i+1)
   for m in range(nens):
     u, v = rv.X2uv(ni, nj, Xa[i, m, :])
     ax.contour(ii, jj, u, (-15, 15), colors=[cmap[m][0:3]], linewidths=2)
+  # u, v = rv.X2uv(ni, nj, np.mean(Xa[i, :, :], axis=0))
+  # ax.contour(ii, jj, u, (-15, 15), colors='r', linewidths=3)
   ut, vt = rv.X2uv(ni, nj, Xt)
   ax.contour(ii, jj, ut, (-15, 15), colors='k', linewidths=3)
   ax.plot(iObs, jObs, 'k+', markersize=10, markeredgewidth=2)

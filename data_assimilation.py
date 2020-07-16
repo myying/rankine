@@ -2,6 +2,42 @@ import numpy as np
 import localize
 import rankine_vortex as rv
 
+def filter_update(ni, nj, nv, Xb, iX, jX, H, iObs, jObs, vObs, obs, obserr, local_cutoff, krange, filter_kind):
+  local_factor = (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
+  nens, nX = Xb.shape
+  X = Xb.copy()
+  ns = len(krange)
+  for s in range(ns):
+    Xsb = X.copy()
+    for m in range(nens):
+      Xsb[m, :] = get_scale(ni, nj, nv, X[m, :], krange, s)
+    Xsa = Xsb.copy()
+    Y = np.dot(H, X.T)
+    local = local_cutoff * local_factor[s]
+    if filter_kind == 'EnSRF':
+      Xsa = EnSRF(ni, nj, nv, Xsb, Y, iX, jX, H, iObs, jObs, vObs, obs, obserr, local)
+    if filter_kind == 'EnKF':
+      Xsa = EnKF(ni, nj, nv, Xsb, Y, iX, jX, H, iObs, jObs, vObs, obs, obserr, local)
+    if filter_kind == 'PF':
+      Xsa = PF(ni, nj, nv, Xsb, Y, iX, jX, H, iObs, jObs, vObs, obs, obserr, local)
+    if s < ns-1:
+      for v in range(nv):
+        xb = np.zeros((ni, nj, nens))
+        xa = np.zeros((ni, nj, nens))
+        xv = np.zeros((ni, nj, nens))
+        for m in range(nens):
+          xb[:, :, m] = np.reshape(Xsb[m, v*ni*nj:(v+1)*ni*nj], (ni, nj))
+          xa[:, :, m] = np.reshape(Xsa[m, v*ni*nj:(v+1)*ni*nj], (ni, nj))
+          xv[:, :, m] = np.reshape(X[m, v*ni*nj:(v+1)*ni*nj], (ni, nj))
+        qu, qv = optical_flow_HS(xb, xa, 5)
+        xv = warp(xv, -qu, -qv)
+        xv += xa - warp(xb, -qu, -qv)
+        for m in range(nens):
+          X[m, v*ni*nj:(v+1)*ni*nj] = np.reshape(xv[:, :, m], (ni*nj,))
+    else:
+      X += Xsa - Xsb
+  return X
+
 def EnSRF(ni, nj, nv, Xb, Yb, iX, jX, H, iObs, jObs, vObs, obs, obserr, local_cutoff):
   nens, nX = Xb.shape
   nobs = obs.size
@@ -58,35 +94,6 @@ def EnKF(ni, nj, nv, Xb, Yb, iX, jX, H, iObs, jObs, vObs, obs, obserr, local_cut
     gain1 = np.sum(Yp * np.tile(hXp, (nobs, 1)), axis=1) / (nens - 1) / (varo + varb)
     for n in range(nens):
       Y[:, n] = Y[:, n] + gain1 * (yo[n] - hX[n])
-  return X
-
-def MSA(ni, nj, nv, Xb, iX, jX, H, iObs, jObs, vObs, obs, obserr, local_cutoff, krange, filter_kind):
-  nens, nX = Xb.shape
-  X = Xb.copy()
-  ns = len(krange)
-  for s in range(ns):
-    Xsb = X.copy()
-    for m in range(nens):
-      Xsb[m, :] = get_scale(ni, nj, nv, X[m, :], krange, s)
-    Y = np.dot(H, X.T)
-    if filter_kind == 'EnSRF':
-      Xsa = EnSRF(ni, nj, nv, Xsb, Y, iX, jX, H, iObs, jObs, vObs, obs, obserr, local_cutoff)
-    if s < ns-1:
-      for v in range(nv):
-        xb = np.zeros((ni, nj, nens))
-        xa = np.zeros((ni, nj, nens))
-        xv = np.zeros((ni, nj, nens))
-        for m in range(nens):
-          xb[:, :, m] = np.reshape(Xsb[m, v*ni*nj:(v+1)*ni*nj], (ni, nj))
-          xa[:, :, m] = np.reshape(Xsa[m, v*ni*nj:(v+1)*ni*nj], (ni, nj))
-          xv[:, :, m] = np.reshape(X[m, v*ni*nj:(v+1)*ni*nj], (ni, nj))
-        qu, qv = optical_flow_HS(xb, xa, 5)
-        xv = warp(xv, -qu, -qv)
-        xv += xa - warp(xb, -qu, -qv)
-        for m in range(nens):
-          X[m, v*ni*nj:(v+1)*ni*nj] = np.reshape(xv[:, :, m], (ni*nj,))
-    else:
-      X += Xsa - Xsb
   return X
 
 def PF(ni, nj, nv, Xb, Yb, iX, jX, H, iObs, jObs, vObs, obs, obserr, local_cutoff):

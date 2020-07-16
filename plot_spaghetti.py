@@ -5,15 +5,14 @@ import rankine_vortex as rv
 import graphics as g
 import sys
 
-filter_kind = ('none', 'EnSRF', 'EnSRF_MSA', 'PF')
-label = ('(a) Prior', '(b) EnSRF', '(c) EnSRF+MSA', '(d) PF')
-localize_cutoff = 0
+outdir = '/Users/mying/work/rankine/cycle//'
+filter_kind = ('NoDA_s1', 'EnSRF_s1', 'EnSRF_s4')
 
 ni = 128  # number of grid points i, j directions
 nj = 128
 nv = 2   # number of variables, (u, v)
-nens = int(sys.argv[1]) # ensemble size
-Csprd = int(sys.argv[2])
+nens = 20 #int(sys.argv[1]) # ensemble size
+t = int(sys.argv[1])
 
 ### Rankine Vortex definition, truth
 Rmw = 5    # radius of maximum wind
@@ -23,25 +22,30 @@ iStorm = 63 # location of vortex in i, j
 jStorm = 63
 
 ##truth
-iX, jX = rv.make_coords(ni, nj)
-Xt = rv.make_state(ni, nj, nv, iStorm, jStorm, Rmw, Vmax, Vout)
+Xt = np.load(outdir+'truth_state.npy')[:, t]
 
 plt.switch_backend('Agg')
 plt.figure(figsize=(10, 10))
 cmap = [plt.cm.jet(x) for x in np.linspace(0, 1,nens)]
 
-i = int(sys.argv[3])
-for k in range(len(filter_kind)):
-  Xa = np.load('out/{}_Csprd{}_N{}.npy'.format(filter_kind[k], Csprd, nens))[i, :, :]
+ax = plt.subplot(221)
+u, v = rv.X2uv(ni, nj, Xt)
+ii, jj = np.mgrid[0:ni, 0:nj]
+ax.contourf(ii, jj, u, np.arange(-50, 51, 5), cmap='bwr')
+g.plot_contour(ax, ni, nj, Xt, 'black', 3)
+g.set_axis(ax, ni, nj)
+ax.set_title('Truth', fontsize=20)
+ax.tick_params(labelsize=15)
 
-  ax = plt.subplot(2, 2, k+1)
+for k in range(len(filter_kind)):
+  Xa = np.load(outdir+filter_kind[k]+'_ens.npy')[:, :, t]
+  ax = plt.subplot(2, 2, k+2)
   for n in range(nens):
-    g.plot_contour(ax,ni,nj, Xa[n, :], [cmap[n][0:3]], 1)
+    g.plot_contour(ax,ni,nj, Xa[:, n], [cmap[n][0:3]], 1)
   g.plot_contour(ax, ni, nj, Xt, 'black', 3)
   g.set_axis(ax,ni,nj)
-  ax.set_title(label[k], fontsize=22, loc='left')
+  ax.set_title(filter_kind[k], fontsize=20)
   ax.tick_params(labelsize=15)
 
-plt.savefig('out/{:03d}.png'.format(i), dpi=100)
-# plt.show()
+plt.savefig('1.pdf')
 
