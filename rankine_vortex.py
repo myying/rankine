@@ -130,7 +130,7 @@ def obs_operator(iX, jX, nv, iObs, jObs, vObs):
   H = np.zeros((nobs, nX*nv))
   for p in range(nobs):
     if vObs[p] == 0 or vObs[p] == 1:
-      H[p, vObs[p]*nX:(vObs[p]+1)*nX] = L[p, :]
+      H[p, int(vObs[p]*nX):int((vObs[p]+1)*nX)] = L[p, :]
     if vObs[p] == 99:
       ##radial velocity
       iSite = 62
