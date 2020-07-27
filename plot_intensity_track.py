@@ -9,7 +9,7 @@ ni = 128  # number of grid points i, j directions
 nj = 128
 nv = 2   # number of variables, (u, v)
 dx = 9000
-nt = 6
+nt = 3
 nens = 20
 cmap = [plt.cm.jet(x) for x in np.linspace(0, 1,nens)]
 

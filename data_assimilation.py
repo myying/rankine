@@ -4,22 +4,29 @@ import rankine_vortex as rv
 
 def filter_update(ni, nj, nv, Xb, iX, jX, H, iObs, jObs, vObs, obs, obserr, local_cutoff, krange, filter_kind):
   local_factor = (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
+  inf_factor = (1.1, 1.1, 1.1, 1.1, 1, 1, 1, 1, 1, 1, 1)
+  obs_err_factor = (2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1)
   nens, nX = Xb.shape
   X = Xb.copy()
   ns = len(krange)
   for s in range(ns):
+    local = local_cutoff * local_factor[s]
+    sigma_o = obserr * obs_err_factor[s]
+    inflation = inf_factor[s]
+    Xm = np.mean(X, axis=0)
+    for m in range(nens):
+      X[m, :] = Xm + inflation*(X[m, :]-Xm)
     Xsb = X.copy()
     for m in range(nens):
       Xsb[m, :] = get_scale(ni, nj, nv, X[m, :], krange, s)
     Xsa = Xsb.copy()
     Y = np.dot(H, X.T)
-    local = local_cutoff * local_factor[s]
     if filter_kind == 'EnSRF':
-      Xsa = EnSRF(ni, nj, nv, Xsb, Y, iX, jX, H, iObs, jObs, vObs, obs, obserr, local)
+      Xsa = EnSRF(ni, nj, nv, Xsb, Y, iX, jX, H, iObs, jObs, vObs, obs, sigma_o, local)
     if filter_kind == 'EnKF':
-      Xsa = EnKF(ni, nj, nv, Xsb, Y, iX, jX, H, iObs, jObs, vObs, obs, obserr, local)
+      Xsa = EnKF(ni, nj, nv, Xsb, Y, iX, jX, H, iObs, jObs, vObs, obs, sigma_o, local)
     if filter_kind == 'PF':
-      Xsa = PF(ni, nj, nv, Xsb, Y, iX, jX, H, iObs, jObs, vObs, obs, obserr, local)
+      Xsa = PF(ni, nj, nv, Xsb, Y, iX, jX, H, iObs, jObs, vObs, obs, sigma_o, local)
     if s < ns-1:
       for v in range(nv):
         xb = np.zeros((ni, nj, nens))

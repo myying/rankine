@@ -10,7 +10,7 @@ nj = 128
 nv = 2   # number of variables, (u, v)
 dx = 9000
 dt = 300
-nt = 3
+nt = 5
 diss = 3*1e3
 
 ### Rankine Vortex definition, truth
@@ -19,13 +19,13 @@ Vmax = 50   # maximum wind speed
 Vout = 0    # wind speed outside of vortex
 iStorm = 83 # location of vortex in i, j
 jStorm = 53
-Csprd = 15
-nens = 20
+Csprd = 8
+nens = 40
 filter_kind = sys.argv[1] #'NoDA'
 ns = int(sys.argv[2])
-localize_cutoff = 20
+localize_cutoff = 50
 obserr = 3.0
-cycle_period = 3600*6
+cycle_period = 3600*1
 #diss_ens = 3e2*np.ones(nens) ##+ np.random.uniform(-2, 4, (nens,))
 
 ##initial ensemble state
@@ -67,7 +67,7 @@ for n in range(nt):
     wind[m, n] = rv.get_max_wind(u[:, :, m], v[:, :, m])
 
   ##model forecast
-  if n < nt:
+  if n < nt-1:
     X[:, :, n+1] = rv.advance_time(ni, nj, X[:, :, n], dx, int(cycle_period/dt), dt, diss)
 
 casename = filter_kind+'_s{}'.format(ns)

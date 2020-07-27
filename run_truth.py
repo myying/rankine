@@ -8,7 +8,7 @@ nj = 128
 nv = 2   # number of variables, (u, v)
 dx = 9000
 dt = 300
-nt = 3
+nt = 5
 diss = 3*1e3
 
 ### Rankine Vortex definition, truth
@@ -18,10 +18,10 @@ Vout = 0    # wind speed outside of vortex
 iStorm = 83 # location of vortex in i, j
 jStorm = 53
 
-obs_range = 10
-nobs = 15
+obs_range = 30
+nobs = 50
 obserr = 3.0
-cycle_period = 3600*6
+cycle_period = 3600*1
 
 iX, jX = rv.make_coords(ni, nj)
 X = np.zeros((ni*nj*nv, nt+1))
