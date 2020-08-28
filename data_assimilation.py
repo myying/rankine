@@ -4,8 +4,8 @@ import rankine_vortex as rv
 
 def filter_update(ni, nj, nv, Xb, iX, jX, H, iObs, jObs, vObs, obs, obserr, local_cutoff, krange, filter_kind):
   local_factor = (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
-  inf_factor = (1.1, 1.1, 1.1, 1.1, 1, 1, 1, 1, 1, 1, 1)
-  obs_err_factor = (2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1)
+  inf_factor = (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
+  obs_err_factor = (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
   nens, nX = Xb.shape
   X = Xb.copy()
   ns = len(krange)

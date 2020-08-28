@@ -7,7 +7,7 @@ import data_assimilation as DA
 ni = 128  # number of grid points i, j directions
 nj = 128
 nv = 2   # number of variables, (u, v)
-nens = 280 # ensemble size
+nens = 80 # ensemble size
 
 ### Rankine Vortex definition, truth
 Rmw = 5    # radius of maximum wind
@@ -23,7 +23,7 @@ Xt = rv.make_state(ni, nj, nv, iStorm, jStorm, Rmw, Vmax, Vout)
 np.random.seed(9)
 
 ##Prior ensemble
-Csprd = 5.0
+Csprd = 3.0
 iBias = 0
 jBias = 0
 Rsprd = 0
@@ -40,13 +40,11 @@ for n in range(nens):
   Xb[n, :] = rv.make_state(ni, nj, nv, iStorm_ens[n], jStorm_ens[n], Rmw_n, Vmax_n, Vout_n)
 
 ###Observations
-iObs = np.array([63, 63])
-jObs = np.array([65, 65])
-# iObs = np.array([66.53, 66.53])
-# jObs = np.array([66.53, 66.53])
+iObs = np.array([66.5, 66.5])
+jObs = np.array([66.5, 66.5])
 vObs = np.array([0, 1])
 nobs = iObs.size   # number of observation points
-obserr = 4.0 # observation error spread
+obserr = 3.0 # observation error spread
 H = rv.obs_operator(iX, jX, nv, iObs, jObs, vObs)
 obs = np.dot(H, Xt) + np.array([2.0, -2.0])
 
@@ -59,7 +57,7 @@ Hout = rv.obs_operator(iX, jX, nv, iout, jout, vout)
 Xa = np.zeros((4, nens, ni*nj*nv))
 Xa[0, :, :] = Xb
 Xa[1, :, :] = DA.filter_update(ni, nj, nv, Xb, iX, jX, H, iObs, jObs, vObs, obs, obserr, 0, np.arange(1, 2), 'EnSRF')
-Xa[2, :, :] = DA.filter_update(ni, nj, nv, Xb, iX, jX, H, iObs, jObs, vObs, obs, obserr, 0, np.arange(1, 2), 'EnSRF')
+Xa[2, :, :] = DA.filter_update(ni, nj, nv, Xb, iX, jX, H, iObs, jObs, vObs, obs, obserr, 0, np.arange(1, 9), 'EnSRF')
 Xa[3, :, :] = DA.filter_update(ni, nj, nv, Xb, iX, jX, H, iObs, jObs, vObs, obs, obserr, 0, np.arange(1, 2), 'PF')
 
 ##plot
