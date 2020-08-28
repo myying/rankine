@@ -10,23 +10,26 @@ nj = 128
 nv = 2   # number of variables, (u, v)
 dx = 9000
 dt = 300
-nt = 5
-diss = 3*1e3
+nt = 24
+diss = 5*1e3
+gen = 2e-5
 
 ### Rankine Vortex definition, truth
 Rmw = 5    # radius of maximum wind
-Vmax = 50   # maximum wind speed
+Vmax = 40   # maximum wind speed
 Vout = 0    # wind speed outside of vortex
-iStorm = 83 # location of vortex in i, j
+iStorm = 100 # location of vortex in i, j
 jStorm = 53
-Csprd = 8
+Csprd = 1
+bkg_err = 3e-5
 nens = 40
 filter_kind = sys.argv[1] #'NoDA'
 ns = int(sys.argv[2])
 localize_cutoff = 50
 obserr = 3.0
 cycle_period = 3600*1
-#diss_ens = 3e2*np.ones(nens) ##+ np.random.uniform(-2, 4, (nens,))
+diss_ens = diss*np.ones(nens) #+ np.random.uniform(-2, 4, (nens,))*1e3
+gen_ens = gen*np.ones(nens) #+ np.random.uniform(-1, 1, (nens,))*1e-5
 
 ##initial ensemble state
 np.random.seed(0)
@@ -42,7 +45,7 @@ for m in range(nens):
   iStorm_ens[m] = iStorm + np.random.normal(0, 1) * Csprd
   jStorm_ens[m] = jStorm + np.random.normal(0, 1) * Csprd
   X[:, m, 0] = rv.make_state(ni, nj, nv, iStorm_ens[m], jStorm_ens[m], Rmw, Vmax, Vout)
-  X[:, m, 0] += X_bkg + rv.make_background_flow(ni, nj, nv, dx, ampl=5e-5)
+  X[:, m, 0] += X_bkg + rv.make_background_flow(ni, nj, nv, dx, ampl=bkg_err)
 
 Xt = np.load(outdir+'truth_state.npy')
 obs = np.load(outdir+'obs.npy')
@@ -53,11 +56,12 @@ vObs = np.load(outdir+'obs_v.npy')
 for n in range(nt):
   print(n)
 
-  ##DA update
-  H = rv.obs_operator(iX, jX, nv, iObs[n, :], jObs[n, :], vObs[n, :])
-  krange = np.arange(2, 2*ns+1, 2)
-  Xa = DA.filter_update(ni, nj, nv, X[:, :, n].T, iX, jX, H, iObs[n, :], jObs[n, :], vObs[n, :], obs[n, :], obserr, localize_cutoff, krange, filter_kind)
-  X[:, :, n] = Xa.T
+  if filter_kind != "NoDA":
+    ##DA update
+    H = rv.obs_operator(iX, jX, nv, iObs[n, :], jObs[n, :], vObs[n, :])
+    krange = np.arange(2, 2*ns+1, 2)
+    Xa = DA.filter_update(ni, nj, nv, X[:, :, n].T, iX, jX, H, iObs[n, :], jObs[n, :], vObs[n, :], obs[n, :], obserr, localize_cutoff, krange, filter_kind)
+    X[:, :, n] = Xa.T
 
   ##diagnose
   u, v = rv.X2uv(ni, nj, X[:, :, n])
@@ -68,7 +72,7 @@ for n in range(nt):
 
   ##model forecast
   if n < nt-1:
-    X[:, :, n+1] = rv.advance_time(ni, nj, X[:, :, n], dx, int(cycle_period/dt), dt, diss)
+    X[:, :, n+1] = rv.advance_time(ni, nj, X[:, :, n], dx, int(cycle_period/dt), dt, diss_ens, gen_ens)
 
 casename = filter_kind+'_s{}'.format(ns)
 np.save(outdir+casename+'_ens.npy', X)

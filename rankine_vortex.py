@@ -73,28 +73,29 @@ def uv2X(ni, nj, u, v):
   return X
 
 ##model forward step, RK4 CS
-def advance_time(ni, nj, X, dx, nt, dt, diss):
+def advance_time(ni, nj, X, dx, nt, dt, diss_ens, gen_ens):
   u, v = X2uv(ni, nj, X)
   zeta = uv2zeta(u, v, dx)
-  u1, v1, zeta1 = u.copy(), v.copy(), zeta.copy()
-  u2, v2, zeta2 = u.copy(), v.copy(), zeta.copy()
-  u3, v3, zeta3 = u.copy(), v.copy(), zeta.copy()
-  # diss = np.tile(diss_ens, (ni, nj, 1))
+  diss = np.tile(diss_ens, (ni, nj, 1))
+  gen = np.tile(gen_ens, (ni, nj, 1))
   for n in range(nt):
-    rhs1 = -(u*deriv_x(zeta, dx)+v*deriv_y(zeta, dx)) + diss*laplacian(zeta, dx)
+    rhs1 = forcing(u, v, zeta, diss, gen, dx)
     zeta1 = zeta + 0.5*dt*rhs1
-    u1, v1 = zeta2uv(zeta1, dx)
-    rhs2 = -(u1*deriv_x(zeta1, dx)+v1*deriv_y(zeta1, dx)) + diss*laplacian(zeta1, dx)
+    rhs2 = forcing(u, v, zeta1, diss, gen, dx)
     zeta2 = zeta + 0.5*dt*rhs2
-    u2, v2 = zeta2uv(zeta2, dx)
-    rhs3 = -(u2*deriv_x(zeta2, dx)+v2*deriv_y(zeta2, dx)) + diss*laplacian(zeta2, dx)
+    rhs3 = forcing(u, v, zeta2, diss, gen, dx)
     zeta3 = zeta + dt*rhs3
-    u3, v3 = zeta2uv(zeta3, dx)
-    rhs4 = -(u3*deriv_x(zeta3, dx)+v3*deriv_y(zeta3, dx)) + diss*laplacian(zeta3, dx)
+    rhs4 = forcing(u, v, zeta3, diss, gen, dx)
     zeta = zeta + dt*(rhs1/6.0+rhs2/3.0+rhs3/3.0+rhs4/6.0)
     u, v = zeta2uv(zeta, dx)
   Xt = uv2X(ni, nj, u, v)
   return Xt
+
+def forcing(u, v, zeta, diss, gen, dx):
+  if ( np.max(uv2wspd(u, v)) > 70):
+    gen = 0
+  fzeta = -(u*deriv_x(zeta, dx)+v*deriv_y(zeta, dx)) + gen*zeta + diss*laplacian(zeta, dx)
+  return fzeta
 
 def deriv_x(f, dx):
   return (np.roll(f, -1, axis=0) - np.roll(f, 1, axis=0))/(2.0*dx)
