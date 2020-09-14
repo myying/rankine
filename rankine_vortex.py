@@ -73,11 +73,11 @@ def uv2X(ni, nj, u, v):
   return X
 
 ##model forward step, RK4 CS
-def advance_time(ni, nj, X, dx, nt, dt, diss_ens, gen_ens):
+def advance_time(ni, nj, X, dx, nt, dt, gen_rate):
   u, v = X2uv(ni, nj, X)
   zeta = uv2zeta(u, v, dx)
-  diss = np.tile(diss_ens, (ni, nj, 1))
-  gen = np.tile(gen_ens, (ni, nj, 1))
+  diss = 5e3
+  gen=gen_rate*1e-4*wind_cutoff(np.max(uv2wspd(u,v)), 70)
   for n in range(nt):
     rhs1 = forcing(u, v, zeta, diss, gen, dx)
     zeta1 = zeta + 0.5*dt*rhs1
@@ -91,9 +91,16 @@ def advance_time(ni, nj, X, dx, nt, dt, diss_ens, gen_ens):
   Xt = uv2X(ni, nj, u, v)
   return Xt
 
+def wind_cutoff(wind, max_wind):
+  buff = 10.0
+  f = 0.0
+  if (wind < max_wind-buff):
+    f = 1.0
+  if (wind >= max_wind-buff and wind < max_wind):
+    f = (max_wind - wind) / buff
+  return f
+
 def forcing(u, v, zeta, diss, gen, dx):
-  if ( np.max(uv2wspd(u, v)) > 70):
-    gen = 0
   fzeta = -(u*deriv_x(zeta, dx)+v*deriv_y(zeta, dx)) + gen*zeta + diss*laplacian(zeta, dx)
   return fzeta
 
@@ -172,7 +179,7 @@ def psi2zeta(psi, dx):
 
 def zeta2psi(zeta, dx):
   psi = np.zeros(zeta.shape)
-  niter = 3000
+  niter = 1000
   for i in range(niter):
     psi = ((np.roll(psi, -1, axis=0) + np.roll(psi, 1, axis=0) + np.roll(psi, -1, axis=1) + np.roll(psi, 1, axis=1)) - zeta*(dx**2))/4.0
   return psi
@@ -194,7 +201,7 @@ def get_center_ij(u, v, dx):
   zmax = -999
   imax = -1
   jmax = -1
-  buff = 10
+  buff = 3
   for i in range(buff, ni-buff):
     for j in range(buff, nj-buff):
       z = np.sum(zeta[i-buff:i+buff, j-buff:j+buff])
