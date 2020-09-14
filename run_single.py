@@ -51,8 +51,10 @@ else:
   state_error = np.zeros((nrealize, nens+1))
   state_error[:, :] = np.nan
 
-for realize in range(r0, r0+100):
+for realize in range(nrealize):
   np.random.seed(realize)  # fix random number seed, make results predictable
+  if realize%100 == 0:
+    print(realize)
 
   ##Prior ensemble
   Xb = np.zeros((nens, ni*nj*nv))
@@ -78,7 +80,7 @@ for realize in range(r0, r0+100):
   ##Run filter
   Xa = Xb.copy()
   krange = np.arange(1, ns+1)
-  Xa = DA.filter_update(ni, nj, nv, Xb, iX, jX, H, iObs, jObs, vObs, obs, obserr, localize_cutoff, krange, filter_kind)
+  Xa, infl = DA.filter_update(ni, nj, nv, Xb, iX, jX, H, iObs, jObs, vObs, obs, obserr, localize_cutoff, np.ones((ni*nj*nv, 2)), krange, filter_kind)
 
   ###Diagnose
   ###domain-averaged (near storm region) state (u,v) error:
