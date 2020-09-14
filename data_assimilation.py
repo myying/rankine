@@ -1,32 +1,39 @@
 import numpy as np
 import localize
 import rankine_vortex as rv
+import inflate
 
-def filter_update(ni, nj, nv, Xb, iX, jX, H, iObs, jObs, vObs, obs, obserr, local_cutoff, krange, filter_kind):
-  local_factor = (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
-  inf_factor = (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
-  obs_err_factor = (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
+def filter_update(ni, nj, nv, Xb, iX, jX, H, iObs, jObs, vObs, obs, obserr, local_cutoff, infb, krange, filter_kind):
   nens, nX = Xb.shape
   X = Xb.copy()
+  infa = infb.copy()
   ns = len(krange)
+  local_factor = localize.local_ms_factor(ns)
+  ###scale loop
   for s in range(ns):
     local = local_cutoff * local_factor[s]
-    sigma_o = obserr * obs_err_factor[s]
-    inflation = inf_factor[s]
-    Xm = np.mean(X, axis=0)
-    for m in range(nens):
-      X[m, :] = Xm + inflation*(X[m, :]-Xm)
+    sigma_o = obserr
+    ###get scale component
     Xsb = X.copy()
     for m in range(nens):
       Xsb[m, :] = get_scale(ni, nj, nv, X[m, :], krange, s)
     Xsa = Xsb.copy()
+    ###inflation
+    infa[:, :, s] = update_inflation(ni, nj, nv, Xsb, np.dot(H, X.T), iX, jX, H, iObs, jObs, vObs, obs, obserr, local_cutoff, infb[:, :, s])
+    Xsbm = np.mean(Xsb, axis=0)
+    Xsbi = Xsb.copy()
+    for m in range(nens):
+      Xsbi[m, :] = Xsbm + infa[:, 0, s] * (Xsb[m, :] - Xsbm)
+    X = X - Xsb + Xsbi
     Y = np.dot(H, X.T)
+    ###run filter
     if filter_kind == 'EnSRF':
       Xsa = EnSRF(ni, nj, nv, Xsb, Y, iX, jX, H, iObs, jObs, vObs, obs, sigma_o, local)
     if filter_kind == 'EnKF':
       Xsa = EnKF(ni, nj, nv, Xsb, Y, iX, jX, H, iObs, jObs, vObs, obs, sigma_o, local)
     if filter_kind == 'PF':
       Xsa = PF(ni, nj, nv, Xsb, Y, iX, jX, H, iObs, jObs, vObs, obs, sigma_o, local)
+    ###alignment
     if s < ns-1:
       for v in range(nv):
         xb = np.zeros((ni, nj, nens))
@@ -43,14 +50,45 @@ def filter_update(ni, nj, nv, Xb, iX, jX, H, iObs, jObs, vObs, obs, obserr, loca
           X[m, v*ni*nj:(v+1)*ni*nj] = np.reshape(xv[:, :, m], (ni*nj,))
     else:
       X += Xsa - Xsb
-  return X
+  return X, infa
+
+def update_inflation(ni, nj, nv, Xb, Yb, iX, jX, H, iObs, jObs, vObs, obs, obserr, local_cutoff, infb):
+  nens, nX = Xb.shape
+  nobs = obs.size
+  X = Xb.copy()
+  Y = Yb.copy()
+  Xm = np.mean(X, axis=0)
+  Xp = X - np.tile(Xm, (nens, 1))
+  Ym = np.mean(Y, axis=1)
+  Yp = Y - np.tile(Ym, (nens, 1)).T
+  ##adaptive inflation
+  inf = infb.copy()
+  for p in range(nobs):
+    yo = obs[p]
+    hX = Y[p, :]
+    hXm = np.mean(hX)
+    hXp = hX - hXm
+    varo = obserr**2  ##obs error variance
+    varb = np.sum(hXp**2) / (nens - 1)  ##prior error variance
+    dist = localize.make_dist(ni, nj, nv, iX, jX, iObs[p], jObs[p], vObs[p])
+    loc = localize.GC(dist, local_cutoff)
+    for i in range(nX):
+      cov = np.sum(Xp[:, i] * hXp) / (nens - 1)
+      var = np.sum(Xp[:, i]**2) / (nens - 1)
+      if var<=0.0:
+        corr = 0.0
+      else:
+        corr = loc[i] * cov / np.sqrt(var * varb)
+      if (corr > 0):
+        inf[i, 0], inf[i, 1] = inflate.adaptive_inflation(inf[i, 0], inf[i, 1], hXm, varb, nens, yo, varo, corr)
+  return inf
 
 def EnSRF(ni, nj, nv, Xb, Yb, iX, jX, H, iObs, jObs, vObs, obs, obserr, local_cutoff):
   nens, nX = Xb.shape
   nobs = obs.size
   X = Xb.copy()
   Y = Yb.copy()
-  for p in range(nobs):
+  for p in range(nobs):  ##cycle through each observation
     Xm = np.mean(X, axis=0)
     Xp = X - np.tile(Xm, (nens, 1))
     Ym = np.mean(Y, axis=1)
@@ -59,16 +97,20 @@ def EnSRF(ni, nj, nv, Xb, Yb, iX, jX, H, iObs, jObs, vObs, obs, obserr, local_cu
     hX = Y[p, :]
     hXm = np.mean(hX)
     hXp = hX - hXm
-    varo = obserr**2
-    varb = np.sum(hXp**2) / (nens - 1)
-    srf = 1.0 / (1.0 + np.sqrt(varo / (varo + varb)))
+    varo = obserr**2  ##obs error variance
+    varb = np.sum(hXp**2) / (nens - 1)  ##prior error variance
+    srf = 1.0 / (1.0 + np.sqrt(varo / (varo + varb)))  ##square root modification
+    ##localization
     dist = localize.make_dist(ni, nj, nv, iX, jX, iObs[p], jObs[p], vObs[p])
     loc = localize.GC(dist, local_cutoff)
+    ##Kalman gain
     gain = loc * np.sum(Xp * np.tile(hXp, (nX, 1)).T, axis=0) / (nens - 1) / (varo + varb)
+    ##update mean and perturbations
     Xm = Xm + gain * (yo - hXm)
     for n in range(nens):
       Xp[n, :] = Xp[n, :] - srf * gain * hXp[n]
     X = Xp + np.tile(Xm, (nens, 1))
+    ##update observation priors
     gain1 = np.sum(Yp * np.tile(hXp, (nobs, 1)), axis=1) / (nens - 1) / (varo + varb)
     Ym = Ym + gain1 * (yo - hXm)
     for n in range(nens):

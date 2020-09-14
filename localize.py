@@ -25,3 +25,24 @@ def GC(dist, cutoff):
 def Gauss(dist, cutoff):
   loc = np.exp(-dist**2 / (cutoff / 3.5)**2 / 2)
   return loc
+
+
+def local_ms_factor(ns):
+  # local_factor = np.ones(ns)
+  if ns==1:
+    local_factor = np.array([1.0])
+  if ns==2:
+    local_factor = np.array([1.2, 0.8])
+  if ns==3:
+    local_factor = np.array([1.2, 1.0, 0.8])
+  if ns==4:
+    local_factor = np.array([1.8, 1.2, 0.8, 0.5])
+  if ns==5:
+    local_factor = np.array([1.8, 1.2, 1.0, 0.8, 0.5])
+  if ns==6:
+    local_factor = np.array([2.0, 1.6, 1.2, 1.0, 0.8, 0.5])
+  if ns==7:
+    local_factor = np.array([2.0, 1.6, 1.4, 1.2, 1.0, 0.8, 0.5])
+  if ns==8:
+    local_factor = np.array([2.0, 1.8, 1.6, 1.4, 1.2, 1.0, 0.8, 0.5])
+  return local_factor
