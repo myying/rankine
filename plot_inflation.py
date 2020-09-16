@@ -29,7 +29,7 @@ cmap = [plt.cm.jet(x) for x in np.linspace(0, 1,nens)]
 ii, jj = np.mgrid[0:ni, 0:nj]
 
 ax = plt.subplot(221)
-X = np.load(outdir+casename+'_ens.npy')[:, :, t]
+X = np.load(outdir+casename+'_ens.npy')[:, :, 1, t]
 for m in range(nens):
   u, v = rv.X2uv(ni, nj, X[:, m])
   ax.contour(ii, jj, u, wind_highlight, colors=[cmap[m][0:3]], linewidths=1)
@@ -53,7 +53,7 @@ c = ax.contourf(ii, jj, inf_sd) #, np.arange(0.1, 1.2, 0.01), cmap='jet')
 plt.colorbar(c)
 
 ax = plt.subplot(224)
-dat = np.load(outdir+casename+'_ens.npy')[0:ni*nj, :, t-1]
+dat = np.load(outdir+casename+'_ens.npy')[0:ni*nj, :, 1, t-1]
 dat_mean = np.mean(dat, axis=1)
 sprd = np.zeros(ni*nj)
 for m in range(nens):

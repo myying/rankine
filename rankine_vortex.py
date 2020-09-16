@@ -77,7 +77,7 @@ def advance_time(ni, nj, X, dx, nt, dt, gen_rate):
   u, v = X2uv(ni, nj, X)
   zeta = uv2zeta(u, v, dx)
   diss = 5e3
-  gen=gen_rate*1e-4*wind_cutoff(np.max(uv2wspd(u,v)), 70)
+  gen=gen_rate*1e-5*wind_cutoff(np.max(uv2wspd(u,v)), 70)
   for n in range(nt):
     rhs1 = forcing(u, v, zeta, diss, gen, dx)
     zeta1 = zeta + 0.5*dt*rhs1

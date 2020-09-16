@@ -8,29 +8,29 @@ nj = 128
 nv = 2   # number of variables, (u, v)
 dx = 9000
 dt = 300
-nt = 12
+nt = 13
 
 ### Rankine Vortex definition, truth
 Rmw = 5    # radius of maximum wind
-Vmax = 25   # maximum wind speed
+Vmax = 20   # maximum wind speed
 Vout = 0    # wind speed outside of vortex
-iStorm = 80 # location of vortex in i, j
-jStorm = 45
-gen_rate = 0.3
+iStorm = 64 # location of vortex in i, j
+jStorm = 64
+gen_rate = 1.0
 
-obs_range = 20
-nobs = 20
+obs_range = 25
+nobs = 50
 obserr = 5.0
-cycle_period = 3600
+cycle_period = 7200
 
 iX, jX = rv.make_coords(ni, nj)
-X = np.zeros((ni*nj*nv, nt+1))
-loc = np.zeros((2, nt+1))
-wind = np.zeros((nt+1,))
-obs = np.zeros((nt+1, nobs*nv))
-iObs = np.zeros((nt+1, nobs*nv))
-jObs = np.zeros((nt+1, nobs*nv))
-vObs = np.zeros((nt+1, nobs*nv))
+X = np.zeros((ni*nj*nv, nt))
+loc = np.zeros((2, nt))
+wind = np.zeros((nt,))
+obs = np.zeros((nt, nobs*nv))
+iObs = np.zeros((nt, nobs*nv))
+jObs = np.zeros((nt, nobs*nv))
+vObs = np.zeros((nt, nobs*nv))
 
 ##initial state
 np.random.seed(0)
@@ -52,7 +52,7 @@ for n in range(nt):
   H = rv.obs_operator(iX, jX, nv, iObs[n, :], jObs[n, :], vObs[n, :])
   obs[n, :] = np.dot(H, X[:, n]) + np.random.normal(0.0, obserr, (nobs*nv,))
 
-  if n < nt:
+  if n < nt-1:
     X[:, n+1] = rv.advance_time(ni, nj, X[:, n], dx, int(cycle_period/dt), dt, gen_rate)
 
 np.save(outdir+'truth_state.npy', X)

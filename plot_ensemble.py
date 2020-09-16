@@ -5,7 +5,7 @@ import rankine_vortex as rv
 import sys
 
 outdir = '/Users/mying/work/rankine/cycle/'
-filter_kind = ('NoDA_s1', 'EnSRF_s1') #, 'EnSRF_s4', 'EnSRF_s8')
+filter_kind = ('NoDA_s1', 'EnSRF_s1', 'EnSRF_s4') #, 'EnSRF_s8')
 
 ni = 128  # number of grid points i, j directions
 nj = 128
@@ -41,7 +41,7 @@ ax.set_title('Truth', fontsize=20)
 ax.tick_params(labelsize=15)
 
 for k in range(len(filter_kind)):
-  Xa = np.load(outdir+filter_kind[k]+'_ens.npy')[:, :, t]
+  Xa = np.load(outdir+filter_kind[k]+'_ens.npy')[:, :, 1, t]
   ax = plt.subplot(2, 2, k+2)
   for m in range(nens):
     u, v = rv.X2uv(ni, nj, Xa[:, m])

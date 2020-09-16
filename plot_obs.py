@@ -8,8 +8,8 @@ ni = 128  # number of grid points i, j directions
 nj = 128
 nv = 2   # number of variables, (u, v)
 dx = 9000
-nt = 24
-obs_int = 3
+nt = 12
+obs_int = 1
 cmap = [plt.cm.jet(x) for x in np.linspace(0, 1,nt)]
 
 X = np.load(outdir+'truth_state.npy')
