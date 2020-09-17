@@ -11,7 +11,7 @@ ni = 128  # number of grid points i, j directions
 nj = 128
 dx = 9000
 nv = 2   # number of variables, (u, v)
-nens = 40 #int(sys.argv[1]) # ensemble size
+nens = 20 #int(sys.argv[1]) # ensemble size
 t = int(sys.argv[2]) #1
 s = int(sys.argv[3]) #1
 

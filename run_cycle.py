@@ -21,7 +21,7 @@ jStorm = 64
 nens = 20
 Csprd = 6
 bkg_err = 1e-4
-gen_rate_ens = np.random.uniform(1.0, 1.0, nens)
+gen_rate_ens = np.random.uniform(1.0, 1.5, nens)
 
 filter_kind = sys.argv[1] #'NoDA'
 ns = int(sys.argv[2])  ##number of scales

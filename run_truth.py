@@ -16,7 +16,7 @@ Vmax = 20   # maximum wind speed
 Vout = 0    # wind speed outside of vortex
 iStorm = 64 # location of vortex in i, j
 jStorm = 64
-gen_rate = 1.0
+gen_rate = 2.0
 
 obs_range = 25
 nobs = 50

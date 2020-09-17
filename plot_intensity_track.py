@@ -52,7 +52,7 @@ ax = plt.subplot(232)
 for m in range(nens):
   ax.plot(wind_ens[m, 1, 0:nt], color=cmap[m][0:3], marker=None)
 ax.plot(wind[0:nt], 'k', linewidth=3)
-ax.set_ylim(10, 50)
+ax.set_ylim(10, 70)
 
 ax = plt.subplot(235)
 wind_rmse = 0
