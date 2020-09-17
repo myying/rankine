@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import rankine_vortex as rv
 import sys
 
-outdir = '/Users/mying/work/rankine/cycle/'
+outdir = '/glade/scratch/mying/rankine/cycle/'
 filter_kind = ('NoDA_s1', 'EnSRF_s1', 'EnSRF_s4') #, 'EnSRF_s8')
 
 ni = 128  # number of grid points i, j directions

@@ -9,7 +9,7 @@ if (len(sys.argv)<7):
   print("usage: run_single.py filter_kind ns nens Csprd obsR obsErr")
   exit()
 
-outdir = '/Users/mying/work/rankine/single/'
+outdir = '/glade/scratch/mying/rankine/single/'
 nrealize = 10000
 r0 = 0
 

@@ -5,7 +5,7 @@ import rankine_vortex as rv
 import graphics as g
 import sys
 
-outdir = '/Users/mying/work/rankine/cycle//'
+outdir = '/glade/scratch/mying/rankine/cycle/'
 filter_kind = ('NoDA_s1', 'EnSRF_s1', 'EnSRF_s4')
 
 ni = 128  # number of grid points i, j directions

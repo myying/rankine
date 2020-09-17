@@ -3,7 +3,7 @@ import numpy as np
 import rankine_vortex as rv
 import matplotlib.pyplot as plt
 
-outdir = '/Users/mying/work/rankine/cycle/'
+outdir = '/glade/scratch/mying/rankine/cycle/'
 ni = 128  # number of grid points i, j directions
 nj = 128
 nv = 2   # number of variables, (u, v)
