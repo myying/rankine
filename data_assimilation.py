@@ -79,7 +79,7 @@ def update_inflation(ni, nj, nv, Xb, Yb, iX, jX, H, iObs, jObs, vObs, obs, obser
       else:
         corr = loc[i] * cov / np.sqrt(var * varb)
       if (np.abs(corr) > 0):
-        inf[i, 0], inf[i, 1] = inflate.adaptive_inflation(inf[i, 0], inf[i, 1], hXm, varb, nens, yo, varo, corr)
+        inf[i, 0], inf[i, 1] = inflate.adaptive_inflation(inf[i, 0], inf[i, 1], hXm, varb, nens, yo, varo, np.abs(corr))
   return inf
 
 def EnSRF(ni, nj, nv, Xb, Yb, iX, jX, H, iObs, jObs, vObs, obs, obserr, local_cutoff):
