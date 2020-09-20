@@ -3,61 +3,6 @@ import localize
 import rankine_vortex as rv
 import inflate
 
-# def filter_update(ni, nj, nv, Xb, iX, jX, H, iObs, jObs, vObs, obs, obserr, local_cutoff, infb, krange, filter_kind):
-#   nens, nX = Xb.shape
-#   X = Xb.copy()
-#   infa = infb.copy()
-#   ns = len(krange)
-#   local_factor = localize.local_ms_factor(ns)
-#   ###inflation
-#   # infa[:, :, 0] = update_inflation(ni, nj, nv, X, np.dot(H, X.T), iX, jX, H, iObs, jObs, vObs, obs, obserr, local_cutoff, infb[:, :, 0])
-#   # Xm = np.mean(X, axis=0)
-#   # for m in range(nens):
-#     # X[m, :] = Xm + infa[:, 0, 0] * (X[m, :] - Xm)
-#   ##scale decomposition
-#   Xs = np.zeros((nens, nX, ns))
-#   for s in range(ns):
-#     for m in range(nens):
-#       Xs[m, :, s] = get_scale(ni, nj, nv, X[m, :], krange, s)
-#   ###scale loop
-#   for s in range(ns):
-#     X = np.sum(Xs, axis=2)
-#     local = local_cutoff * local_factor[s]
-#     sigma_o = obserr
-#     ###inflation
-#     infa[:, :, s] = update_inflation(ni, nj, nv, Xs[:, :, s], np.dot(H, X.T), iX, jX, H, iObs, jObs, vObs, obs, obserr, local_cutoff, infb[:, :, s])
-#     Xsm = np.mean(Xs[:, :, s], axis=0)
-#     for m in range(nens):
-#       Xs[m, :, s] = Xsm + infa[:, 0, s] * (Xs[m, :, s] - Xsm)
-#     ###run filter
-#     Xsb = Xs[:, :, s].copy()
-#     X = np.sum(Xs, axis=2)
-#     if filter_kind == 'EnSRF':
-#       Xsa = EnSRF(ni, nj, nv, Xsb, np.dot(H, X.T), iX, jX, H, iObs, jObs, vObs, obs, sigma_o, local)
-#     if filter_kind == 'EnKF':
-#       Xsa = EnKF(ni, nj, nv, Xsb, np.dot(H, X.T), iX, jX, H, iObs, jObs, vObs, obs, sigma_o, local)
-#     if filter_kind == 'PF':
-#       Xsa = PF(ni, nj, nv, Xsb, np.dot(H, X.T), iX, jX, H, iObs, jObs, vObs, obs, sigma_o, local)
-#     ###alignment
-#     # Xs[:, :, s] = Xsa
-#     if s < ns-1:
-#       for v in range(nv):
-#         xb = np.zeros((ni, nj, nens))
-#         xa = np.zeros((ni, nj, nens))
-#         xv = np.zeros((ni, nj, nens))
-#         for m in range(nens):
-#           xb[:, :, m] = np.reshape(Xsb[m, v*ni*nj:(v+1)*ni*nj], (ni, nj))
-#           xa[:, :, m] = np.reshape(Xsa[m, v*ni*nj:(v+1)*ni*nj], (ni, nj))
-#         qu, qv = optical_flow_HS(xb, xa, 5)
-#         for i in range(s+1, ns):
-#           for m in range(nens):
-#             xv[:, :, m] = np.reshape(Xs[m, v*ni*nj:(v+1)*ni*nj, s], (ni, nj))
-#           xv = warp(xv, -qu, -qv)
-#           for m in range(nens):
-#             Xs[m, v*ni*nj:(v+1)*ni*nj, s] = np.reshape(xv[:, :, m], (ni*nj,))
-#   X = np.sum(Xs, axis=2)
-#   return X, infa
-
 def filter_update(ni, nj, nv, Xb, iX, jX, H, iObs, jObs, vObs, obs, obserr, local_cutoff, infb, krange, filter_kind, run_inflation, run_alignment):
   nens, nX = Xb.shape
   X = Xb.copy()
@@ -78,7 +23,7 @@ def filter_update(ni, nj, nv, Xb, iX, jX, H, iObs, jObs, vObs, obs, obserr, loca
       infa[:, :, s] = update_inflation(ni, nj, nv, Xsb, np.dot(H, X.T), iX, jX, H, iObs, jObs, vObs, obs, obserr, local_cutoff, infb[:, :, s])
       Xsbm = np.mean(Xsb, axis=0)
       for m in range(nens):
-        Xsb[m, :] = Xsbm + infa[:, 0, s] * (Xsb[m, :] - Xsbm)
+        Xsb[m, :] = Xsbm + np.sqrt(infa[:, 0, s]) * (Xsb[m, :] - Xsbm)
     Y = np.dot(H, X.T)
     ###run filter
     if filter_kind == 'EnSRF':
