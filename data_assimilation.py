@@ -58,7 +58,7 @@ import inflate
 #   X = np.sum(Xs, axis=2)
 #   return X, infa
 
-def filter_update(ni, nj, nv, Xb, iX, jX, H, iObs, jObs, vObs, obs, obserr, local_cutoff, infb, krange, filter_kind):
+def filter_update(ni, nj, nv, Xb, iX, jX, H, iObs, jObs, vObs, obs, obserr, local_cutoff, infb, krange, filter_kind, run_inflation, run_alignment):
   nens, nX = Xb.shape
   X = Xb.copy()
   infa = infb.copy()
@@ -74,13 +74,11 @@ def filter_update(ni, nj, nv, Xb, iX, jX, H, iObs, jObs, vObs, obs, obserr, loca
       Xsb[m, :] = get_scale(ni, nj, nv, X[m, :], krange, s)
     Xsa = Xsb.copy()
     ###inflation
-    infa[:, :, s] = update_inflation(ni, nj, nv, Xsb, np.dot(H, X.T), iX, jX, H, iObs, jObs, vObs, obs, obserr, local_cutoff, infb[:, :, s])
-    Xsbm = np.mean(Xsb, axis=0)
-    Xsbi = Xsb.copy()
-    for m in range(nens):
-      Xsbi[m, :] = Xsbm + infa[:, 0, s] * (Xsb[m, :] - Xsbm)
-    Xsb = Xsbi
-    # X = X - Xsb + Xsbi
+    if run_inflation:
+      infa[:, :, s] = update_inflation(ni, nj, nv, Xsb, np.dot(H, X.T), iX, jX, H, iObs, jObs, vObs, obs, obserr, local_cutoff, infb[:, :, s])
+      Xsbm = np.mean(Xsb, axis=0)
+      for m in range(nens):
+        Xsb[m, :] = Xsbm + infa[:, 0, s] * (Xsb[m, :] - Xsbm)
     Y = np.dot(H, X.T)
     ###run filter
     if filter_kind == 'EnSRF':
@@ -90,7 +88,7 @@ def filter_update(ni, nj, nv, Xb, iX, jX, H, iObs, jObs, vObs, obs, obserr, loca
     if filter_kind == 'PF':
       Xsa = PF(ni, nj, nv, Xsb, Y, iX, jX, H, iObs, jObs, vObs, obs, sigma_o, local)
     ###alignment
-    if s < ns-1:
+    if run_alignment and s < ns-1:
       for v in range(nv):
         xb = np.zeros((ni, nj, nens))
         xa = np.zeros((ni, nj, nens))
@@ -135,7 +133,7 @@ def update_inflation(ni, nj, nv, Xb, Yb, iX, jX, H, iObs, jObs, vObs, obs, obser
         corr = 0.0
       else:
         corr = loc[i] * cov / np.sqrt(var * varb)
-      if (corr > 0):
+      if (np.abs(corr) > 0):
         inf[i, 0], inf[i, 1] = inflate.adaptive_inflation(inf[i, 0], inf[i, 1], hXm, varb, nens, yo, varo, corr)
   return inf
 
