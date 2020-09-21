@@ -60,7 +60,10 @@ inflation = np.ones((ni*nj*nv, 2, ns, nt))  ###adaptive inflation field 0: inf_m
 inflation[:, 0, :, :] = 1.0
 inflation[:, 1, :, :] = 1.0
 
-##load obs
+##load truth and obs
+X = np.load(outdir+'truth_state.npy')
+loc = np.load(outdir+'truth_ij.npy')
+wind = np.load(outdir+'truth_wind.npy')
 obs = np.load(outdir+'obs.npy')
 iObs = np.load(outdir+'obs_i.npy')
 jObs = np.load(outdir+'obs_j.npy')
