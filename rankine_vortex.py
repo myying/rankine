@@ -195,13 +195,17 @@ def get_max_wind(u, v):
   wspd = uv2wspd(u, v)
   return np.max(wspd)
 
+def get_size(u, v, dx):
+  rmw = 0
+  return rmw
+
 def get_center_ij(u, v, dx):
   ni, nj = u.shape
   zeta = uv2zeta(u, v, dx)
   zmax = -999
   imax = -1
   jmax = -1
-  buff = 3
+  buff = 2
   for i in range(buff, ni-buff):
     for j in range(buff, nj-buff):
       z = np.sum(zeta[i-buff:i+buff, j-buff:j+buff])
