@@ -16,13 +16,13 @@ ns = int(sys.argv[4])
 
 outdir = '/glade/scratch/mying/rankine/cycle/'+casename+'/{:03d}/'.format(nrealize)
 X = np.load(outdir+'truth_state.npy')
-loc = np.load(outdir+'truth_ij.npy')
+loc = np.load(outdir+'truth_loc.npy')
 wind = np.load(outdir+'truth_wind.npy')
 
 Xens = np.load(outdir+filter_kind+'_s{}'.format(ns)+'_ens.npy')
-loc_ens = np.load(outdir+filter_kind+'_s{}'.format(ns)+'_ij.npy')
-wind_ens = np.load(outdir+filter_kind+'_s{}'.format(ns)+'_wind.npy')
-mean_state_err = np.load(outdir+filter_kind+'_s{}'.format(ns)+'_state_err.npy')
+loc_ens = np.load(outdir+filter_kind+'_s{}'.format(ns)+'_loc_ens.npy')
+wind_ens = np.load(outdir+filter_kind+'_s{}'.format(ns)+'_wind_ens.npy')
+mean_state_err = np.load(outdir+filter_kind+'_s{}'.format(ns)+'_state_err_sprd.npy')
 
 nX, nens, nc, nt = Xens.shape
 cmap = [plt.cm.jet(x) for x in np.linspace(0, 1,nens)]
@@ -62,7 +62,7 @@ ax.plot(wind_rmse)
 ax.set_ylim(0, 20)
 ##physics space rmse
 ax = plt.subplot(236)
-ax.plot(mean_state_err[1, 0:nt])
+ax.plot(mean_state_err[0, 1, 0:nt])
 ax.set_ylim(0, 10)
 # plt.savefig('{:03d}.png'.format(nrealize), dpi=100)
 plt.show()
