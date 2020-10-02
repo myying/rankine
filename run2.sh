@@ -3,13 +3,13 @@ casename=perfect_model
 filter_type=EnSRF
 ns=$1
 
-for n in `seq 1 20 100`; do
+for n in `seq 1 20 500`; do
   cat > tmp << EOF
 #PBS -N run
-#PBS -A P54048000
+#PBS -A NMMM0021
 #PBS -l select=1:ncpus=20:mpiprocs=20
-#PBS -l walltime=08:00:00
-#PBS -q regular
+#PBS -l walltime=05:00:00
+#PBS -q premium
 #PBS -j oe
 #PBS -o log
 source ~/.bashrc

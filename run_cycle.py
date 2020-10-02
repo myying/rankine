@@ -46,6 +46,7 @@ iX, jX = rv.make_coords(ni, nj)
 Xens = np.zeros((ni*nj*nv, nens, 2, nt))  ###ensemble state 0:prior 1:posterior
 loc_ens = np.zeros((2, nens+1, 2, nt)) ##i(0) j(1); nens and mean; prior(0) post(1), num cycles
 wind_ens = np.zeros((nens+1, 2, nt))
+size_ens = np.zeros((nens+1, 2, nt))
 state_err_sprd = np.zeros((2, 2, nt))  ##err(0) spread(1); prior(0) post(1); num cycles
 
 iStorm_ens = np.zeros(nens)
@@ -62,7 +63,7 @@ inflation[:, 1, :, :] = 1.0
 
 ##load truth and obs
 X = np.load(outdir+'truth_state.npy')
-loc = np.load(outdir+'truth_ij.npy')
+loc = np.load(outdir+'truth_loc.npy')
 wind = np.load(outdir+'truth_wind.npy')
 obs = np.load(outdir+'obs.npy')
 iObs = np.load(outdir+'obs_i.npy')
@@ -70,7 +71,7 @@ jObs = np.load(outdir+'obs_j.npy')
 vObs = np.load(outdir+'obs_v.npy')
 
 for n in range(nt):
-  # print(n)
+  print(n)
 
   if filter_kind != "NoDA" and n%obs_intv == 0 and n>=cycle_start and n<=cycle_end:
     ##DA update
@@ -95,19 +96,22 @@ for n in range(nt):
     sq_sprd = np.zeros((ni, nj))
     for m in range(nens):
       sq_sprd += (u[:, :, m] - um)**2 + (v[:, :, m] - vm)**2
+    sq_sprd = sq_sqrt / (nens-1)
     loc_i = int(loc[0, n])
     loc_j = int(loc[1, n])
     buff = 10
     state_err_sprd[0, i, n] = np.sqrt(np.mean(sq_err[loc_i-buff:loc_i+buff, loc_j-buff:loc_j+buff]))
-    state_err_sprd[1, i, n] = np.sqrt(np.sum(sq_sprd[loc_i-buff:loc_i+buff, loc_j-buff:loc_j+buff])/(nens-1))
+    state_err_sprd[1, i, n] = np.sqrt(np.mean(sq_sprd[loc_i-buff:loc_i+buff, loc_j-buff:loc_j+buff]))
 
     ##feature space: position and intensity, size
     zeta = rv.uv2zeta(u, v, dx)
     for m in range(nens):
       loc_ens[0, m, i, n], loc_ens[1, m, i, n] = rv.get_center_ij(u[:, :, m], v[:, :, m], dx)
       wind_ens[m, i, n] = rv.get_max_wind(u[:, :, m], v[:, :, m])
+      size_ens[m, i, n] = rv.get_size(u[:, :, m], v[:, :, m], loc_ens[0, m, i, n], loc_ens[1, m, i, n])
     loc_ens[0, nens, i, n], loc_ens[1, nens, i, n] = rv.get_center_ij(um, vm, dx)
     wind_ens[nens, i, n] = rv.get_max_wind(um, vm)
+    size_ens[nens, i, n] = rv.get_size(um, vm, loc_ens[0, nens, i, n], loc_ens[1, nens, i, n])
 
   ##model forecast
   if n < nt-1:
@@ -115,9 +119,10 @@ for n in range(nt):
       Xens[:, m, 0, n+1] = rv.advance_time(ni, nj, Xens[:, m, 1, n], dx, int(cycle_period/dt), dt, gen_rate_ens[m])
 
 output = outdir+filter_kind+'_s{}'.format(ns)
-np.save(output+'_ens.npy', Xens)
-np.save(output+'_inflation.npy', inflation)
+# np.save(output+'_ens.npy', Xens)
+# np.save(output+'_inflation.npy', inflation)
 np.save(output+'_gen_rate.npy', gen_rate_ens)
 np.save(output+'_state_err_sprd.npy', state_err_sprd)
 np.save(output+'_loc_ens.npy', loc_ens)
 np.save(output+'_wind_ens.npy', wind_ens)
+np.save(output+'_size_ens.npy', size_ens)

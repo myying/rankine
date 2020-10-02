@@ -1,9 +1,9 @@
 #!/bin/bash
 #PBS -N run
-#PBS -A P54048000
+#PBS -A NMMM0021
 #PBS -l select=1:ncpus=20:mpiprocs=20
 #PBS -l walltime=06:00:00
-#PBS -q regular
+#PBS -q premium
 #PBS -j oe
 #PBS -o log
 source ~/.bashrc

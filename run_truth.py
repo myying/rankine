@@ -31,7 +31,8 @@ outdir = '/glade/scratch/mying/rankine/cycle/'+casename+'/{:03d}/'.format(nreali
 iX, jX = rv.make_coords(ni, nj)
 X = np.zeros((ni*nj*nv, nt))
 loc = np.zeros((2, nt))
-wind = np.zeros((nt,))
+wind = np.zeros(nt)
+size = np.zeros(nt)
 obs = np.zeros((nt, nobs*nv))
 iObs = np.zeros((nt, nobs*nv))
 jObs = np.zeros((nt, nobs*nv))
@@ -47,6 +48,7 @@ for n in range(nt):
   zeta = rv.uv2zeta(u, v, dx)
   loc[0, n], loc[1, n] = rv.get_center_ij(u, v, dx)
   wind[n] = rv.get_max_wind(u, v)
+  size[n] = rv.get_size(u, v, loc[0, n], loc[1, n])
 
   for p in range(nobs):
     for v in range(nv):
@@ -60,8 +62,9 @@ for n in range(nt):
     X[:, n+1] = rv.advance_time(ni, nj, X[:, n], dx, int(cycle_period/dt), dt, gen_rate)
 
 np.save(outdir+'truth_state.npy', X)
-np.save(outdir+'truth_ij.npy', loc)
+np.save(outdir+'truth_loc.npy', loc)
 np.save(outdir+'truth_wind.npy', wind)
+np.save(outdir+'truth_size.npy', size)
 np.save(outdir+'obs.npy', obs)
 np.save(outdir+'obs_i.npy', iObs)
 np.save(outdir+'obs_j.npy', jObs)
