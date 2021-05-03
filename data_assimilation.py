@@ -3,13 +3,12 @@ import localize
 import rankine_vortex as rv
 import inflate
 
-def filter_update(ni, nj, nv, Xb, iX, jX, H, iObs, jObs, vObs, obs, obserr, local_cutoff, infb, krange, filter_kind, run_inflation, run_alignment):
+def filter_update(ni, nj, nv, Xb, iX, jX, H, iObs, jObs, vObs, obs, obserr, local_cutoff, infb, krange, filter_kind, run_inflation=False, run_alignment=True):
   nens, nX = Xb.shape
   X = Xb.copy()
   infa = infb.copy()
   ns = len(krange)
   local_factor = localize.local_ms_factor(ns)
-  scale_damp = np.zeros(ns)
   ###scale loop
   for s in range(ns):
     local = local_cutoff * local_factor[s]
@@ -45,7 +44,7 @@ def filter_update(ni, nj, nv, Xb, iX, jX, H, iObs, jObs, vObs, obs, obserr, loca
           xv[:, :, m] = np.reshape(X[m, v*ni*nj:(v+1)*ni*nj], (ni, nj))
         qu, qv = optical_flow_HS(xb, xa, 5)
         xv = warp(xv, -qu, -qv)
-        xv += scale_damp[s] * (xa - warp(xb, -qu, -qv))
+        xv += xa - warp(xb, -qu, -qv)
         for m in range(nens):
           X[m, v*ni*nj:(v+1)*ni*nj] = np.reshape(xv[:, :, m], (ni*nj,))
     else:
@@ -304,8 +303,7 @@ def spec_bandpass(xk, krange, s):
   kx_, ky_ = get_coords(xk)
   Kh = np.sqrt(kx_**2 + ky_**2)
   xkout = xk.copy()
-  ns = len(krange)
-  if s < ns:
+  if len(krange) > 1:
     r = scale_response(Kh, krange, s)
     xkout = xkout * r
   return xkout

@@ -56,9 +56,9 @@ Hout = rv.obs_operator(iX, jX, nv, iout, jout, vout)
 ##Run filter
 Xa = np.zeros((4, nens, ni*nj*nv))
 Xa[0, :, :] = Xb
-Xa[1, :, :] = DA.filter_update(ni, nj, nv, Xb, iX, jX, H, iObs, jObs, vObs, obs, obserr, 0, np.arange(1, 2), 'EnSRF')
-Xa[2, :, :] = DA.filter_update(ni, nj, nv, Xb, iX, jX, H, iObs, jObs, vObs, obs, obserr, 0, np.arange(1, 9), 'EnSRF')
-Xa[3, :, :] = DA.filter_update(ni, nj, nv, Xb, iX, jX, H, iObs, jObs, vObs, obs, obserr, 0, np.arange(1, 2), 'PF')
+Xa[1, :, :], infa = DA.filter_update(ni, nj, nv, Xb, iX, jX, H, iObs, jObs, vObs, obs, obserr, 0, np.ones((ni*nj*nv, 2, 1)), np.arange(1, 2), 'EnSRF', False, True)
+Xa[2, :, :], infa = DA.filter_update(ni, nj, nv, Xb, iX, jX, H, iObs, jObs, vObs, obs, obserr, 0, np.ones((ni*nj*nv, 2, 8)), np.arange(1, 9), 'EnSRF', False, True)
+Xa[3, :, :], infa = DA.filter_update(ni, nj, nv, Xb, iX, jX, H, iObs, jObs, vObs, obs, obserr, 0, np.ones((ni*nj*nv, 2, 1)), np.arange(1, 2), 'PF', False, True)
 
 ##plot
 plt.switch_backend('Agg')
