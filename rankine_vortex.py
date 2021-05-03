@@ -195,13 +195,37 @@ def get_max_wind(u, v):
   wspd = uv2wspd(u, v)
   return np.max(wspd)
 
+def get_size(u, v, ic, jc):
+  nr = 25
+  wind_min = 15
+  wind_rad = np.zeros(nr)
+  count_rad = np.zeros(nr)
+  wind = uv2wspd(u, v)
+  for i in range(int(ic)-nr, int(ic)+nr):
+    for j in range(int(jc)-nr, int(jc)+nr):
+      r = int(np.sqrt((i-ic)**2+(j-jc)**2))
+      if (r<nr):
+        wind_rad[r] += wind[i, j]
+        count_rad[r] += 1
+  wind_rad = wind_rad / count_rad
+  wind_max = np.max(wind_rad)
+  for r in range(nr):
+    if (wind_rad[r] == wind_max):
+      rmw = r
+  size = 0
+  for r in range(rmw, nr):
+    if (wind_rad[r] <= wind_min):
+      size = r
+      break
+  return size
+
 def get_center_ij(u, v, dx):
   ni, nj = u.shape
   zeta = uv2zeta(u, v, dx)
   zmax = -999
   imax = -1
   jmax = -1
-  buff = 3
+  buff = 2
   for i in range(buff, ni-buff):
     for j in range(buff, nj-buff):
       z = np.sum(zeta[i-buff:i+buff, j-buff:j+buff])

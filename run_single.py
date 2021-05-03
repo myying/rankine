@@ -35,7 +35,6 @@ nens = int(sys.argv[3]) # ensemble size
 Csprd = int(sys.argv[4])
 obsR = int(sys.argv[5])
 obserr = int(sys.argv[6]) # observation error spread
-localize_cutoff = 0
 
 ##truth
 iX, jX = rv.make_coords(ni, nj)
@@ -80,7 +79,8 @@ for realize in range(nrealize):
   ##Run filter
   Xa = Xb.copy()
   krange = np.arange(1, ns+1)
-  Xa, infl = DA.filter_update(ni, nj, nv, Xb, iX, jX, H, iObs, jObs, vObs, obs, obserr, localize_cutoff, np.ones((ni*nj*nv, 2)), krange, filter_kind)
+  infb = np.ones((ni*nj*nv, 2))
+  Xa, infa = DA.filter_update(ni, nj, nv, Xb, iX, jX, H, iObs, jObs, vObs, obs, obserr, localize_cutoff=0, infb, krange, filter_kind, run_inflation=False, run_alignment=True)
 
   ###Diagnose
   ###domain-averaged (near storm region) state (u,v) error:
