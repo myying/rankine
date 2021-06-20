@@ -18,12 +18,12 @@ obserr = 5
 plt.figure(figsize=(8, 4))
 ax = plt.subplot(1, 1, 1)
 for j in range(len(params)):
-  for k in range(len(filter_kind)):
-    rmse = np.load('/storage/windows10/scratch/rankine/single/{}_N{}_C{}_R{}_err{}.npy'.format(filter_kind[k], nens, Csprd, params[j], obserr))[0:100, nens]
-    bx = ax.boxplot(rmse, positions=[j*6+k], widths=0.5, patch_artist=True, sym='')
-    for item in ['boxes', 'whiskers', 'medians', 'caps']:
-      plt.setp(bx[item], color='k', linestyle='solid')
-    plt.setp(bx['boxes'], facecolor=colors[k])
+    for k in range(len(filter_kind)):
+        rmse = np.load('/storage/windows10/scratch/rankine/single/{}_N{}_C{}_R{}_err{}.npy'.format(filter_kind[k], nens, Csprd, params[j], obserr))[0:100, nens]
+        bx = ax.boxplot(rmse, positions=[j*6+k], widths=0.5, patch_artist=True, sym='')
+        for item in ['boxes', 'whiskers', 'medians', 'caps']:
+            plt.setp(bx[item], color='k', linestyle='solid')
+        plt.setp(bx['boxes'], facecolor=colors[k])
 ax.set_xlim(-1, len(params)*8)
 ax.set_xticks(np.arange(len(params))*8+1.5)
 ax.set_xticklabels(params)

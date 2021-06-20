@@ -8,16 +8,16 @@ import sys
 outdir = '/glade/scratch/mying/rankine/cycle/'
 filter_kind = ('NoDA_s1', 'EnSRF_s1', 'EnSRF_s4')
 
-ni = 128  # number of grid points i, j directions
+ni = 128    # number of grid points i, j directions
 nj = 128
-nv = 2   # number of variables, (u, v)
+nv = 2     # number of variables, (u, v)
 nens = 20 #int(sys.argv[1]) # ensemble size
 t = int(sys.argv[1])
 
 ### Rankine Vortex definition, truth
-Rmw = 5    # radius of maximum wind
-Vmax = 50   # maximum wind speed
-Vout = 0    # wind speed outside of vortex
+Rmw = 5        # radius of maximum wind
+Vmax = 50     # maximum wind speed
+Vout = 0        # wind speed outside of vortex
 iStorm = 63 # location of vortex in i, j
 jStorm = 63
 
@@ -38,14 +38,14 @@ ax.set_title('Truth', fontsize=20)
 ax.tick_params(labelsize=15)
 
 for k in range(len(filter_kind)):
-  Xa = np.load(outdir+filter_kind[k]+'_ens.npy')[:, :, t]
-  ax = plt.subplot(2, 2, k+2)
-  for n in range(nens):
-    g.plot_contour(ax,ni,nj, Xa[:, n], [cmap[n][0:3]], 1)
-  g.plot_contour(ax, ni, nj, Xt, 'black', 3)
-  g.set_axis(ax,ni,nj)
-  ax.set_title(filter_kind[k], fontsize=20)
-  ax.tick_params(labelsize=15)
+    Xa = np.load(outdir+filter_kind[k]+'_ens.npy')[:, :, t]
+    ax = plt.subplot(2, 2, k+2)
+    for n in range(nens):
+        g.plot_contour(ax,ni,nj, Xa[:, n], [cmap[n][0:3]], 1)
+    g.plot_contour(ax, ni, nj, Xt, 'black', 3)
+    g.set_axis(ax,ni,nj)
+    ax.set_title(filter_kind[k], fontsize=20)
+    ax.tick_params(labelsize=15)
 
 plt.savefig('1.pdf')
 

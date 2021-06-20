@@ -4,9 +4,9 @@ import rankine_vortex as rv
 import matplotlib.pyplot as plt
 
 outdir = '/glade/scratch/mying/rankine/cycle/'
-ni = 128  # number of grid points i, j directions
+ni = 128    # number of grid points i, j directions
 nj = 128
-nv = 2   # number of variables, (u, v)
+nv = 2     # number of variables, (u, v)
 dx = 9000
 nt = 12
 obs_int = 1
@@ -27,7 +27,7 @@ zeta = rv.uv2zeta(u, v, dx)
 plt.figure(figsize=(10, 8))
 ax = plt.subplot(111)
 for n in range(0, nt, obs_int):
-  ax.scatter(iObs[n, ::2], jObs[n, ::2], s=50, color=[cmap[n][0:3]])
+    ax.scatter(iObs[n, ::2], jObs[n, ::2], s=50, color=[cmap[n][0:3]])
 #for p in range(nobs):
 
 ax.set_xlim(0, ni)
