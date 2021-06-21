@@ -110,7 +110,7 @@ def EnSRF(ni, nj, nv, Xb, Yb, iX, jX, H, iObs, jObs, vObs, obs, obserr, local_cu
             Xp[n, :] = Xp[n, :] - srf * gain * hXp[n]
         X = Xp + np.tile(Xm, (nens, 1))
         ##update observation priors
-        gain1 = np.sum(Yp * np.tile(hXp, (nobs, 1)), axis=1) / (nens - 1) / (varo + varb)
+        gain1 = np.sum(Yp * np.tile(hXp, (nobs, 1)), axis=1) / (nens - 1) / (varo + varb)  ###not localized>????
         Ym = Ym + gain1 * (yo - hXm)
         for n in range(nens):
             Yp[:, n] = Yp[:, n] - srf * gain1 * hXp[n]
