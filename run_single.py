@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 import numpy as np
-import rankine_vortex as rv
-import data_assimilation as DA
 import sys
 import os
+from rankine_vortex import *
+from data_assimilation import *
 
 if (len(sys.argv)<7):
     print("usage: run_single.py filter_kind ns nens Csprd obsR obsErr")

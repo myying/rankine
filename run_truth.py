@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import numpy as np
-import rankine_vortex as rv
+from rankine_vortex import *
 
 outdir = '/storage/windows10/scratch/rankine/cycle/'
 ni = 128    # number of grid points i, j directions
