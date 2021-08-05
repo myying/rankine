@@ -1,43 +1,7 @@
 import numpy as np
-import matplotlib.pyplot as plt
 from rankine_vortex import *
+from obs_def import *
 from multiscale import *
-
-###observation network
-def gen_obs_loc(ni, nj, nv, nobs):
-    Yloc2 = np.zeros((2, nobs))
-    Yloc2[0, :] = np.random.uniform(0, ni, nobs)
-    Yloc2[1, :] = np.random.uniform(0, nj, nobs)
-    Yloc = np.zeros((3, nobs*nv))
-    for k in range(nv):
-        Yloc[0:2, k::nv] = Yloc2
-        Yloc[2, k::nv] = k
-    return Yloc
-
-def obs_interp2d(X, Yloc):
-    dims = X.shape
-    ni, nj = (dims[0], dims[1])
-    io = Yloc[0, :]
-    jo = Yloc[1, :]
-    vo = Yloc[2, :].astype(int)
-    io1 = np.floor(io).astype(int) % ni
-    jo1 = np.floor(jo).astype(int) % nj
-    io2 = np.floor(io+1).astype(int) % ni
-    jo2 = np.floor(jo+1).astype(int) % nj
-    di = io - np.floor(io)
-    dj = jo - np.floor(jo)
-    Y = (1-di)*(1-dj)*X[io1, jo1, vo] + di*(1-dj)*X[io2, jo1, vo] + (1-di)*dj*X[io1, jo2, vo] + di*dj*X[io2, jo2, vo]
-    return Y
-
-def plot_obs(ax, ni, nj, nv, Y, Ymask, Yloc):
-    obsmin, obsmax = (-30, 30)
-    cmap = [plt.cm.bwr(x) for x in np.linspace(0, 1, round(obsmax-obsmin)+1)]
-    subset = np.where(np.logical_and(Yloc[2, :]==0, Ymask==1))
-    color_ind = np.maximum(np.minimum(np.round(Y[subset]-obsmin), int(round(obsmax-obsmin))), 0).astype(int)
-    ax.scatter(Yloc[0, subset], Yloc[1, subset], s=30, color=np.array(cmap)[color_ind, 0:3])
-    ax.set_xlim([0, ni])
-    ax.set_ylim([0, nj])
-    return
 
 
 ##top-level wrapper for update at one analysis cycle:
@@ -74,6 +38,9 @@ def filter_update(Xb, Yo, Ymask, Yloc, filter_kind, obs_err_std, obs_thin, local
         if filter_kind=='EnSRF':
             Xas = EnSRF(Xbs, Xloc, Ybs, Yos, Ymask, Yloc,
                         obs_err_std[s]*obs_err_scale, obs_thin[s], local_cutoff[s], print_out)
+        if filter_kind=='PF':
+            Xas = PF(Xbs, Xloc, Ybs, Yos, Ymask, Yloc,
+                        obs_err_std[s]*obs_err_scale, obs_thin[s])
 
         if s < ns-1 and run_alignment:
             print('      run alignment')
@@ -134,9 +101,41 @@ def EnSRF(Xb, Xloc, Yb, Yo, Ymask, Yloc, obs_err_std, obs_thin, local_cutoff, pr
                 Y = Yp + np.repeat(np.expand_dims(Ym, 1), nens, axis=1)
     return X
 
-
 ##particle filter
-#def PF
+###TODO: make it localized PF
+def PF(Xb, Xloc, Yb, Yo, Ymask, Yloc, obs_err_std, obs_thin):
+    ni, nj, nv, nens = Xb.shape
+    nobs = Yo.size
+    X = Xb.copy()
+    Y = Yb.copy()
+    w = np.zeros(nens)
+    w[:] = 1.0 / nens
+    varo = obs_err_std**2
+    for p in range(0, nobs, obs_thin):
+        if Ymask[p] == 1:
+            yo = Yo[p]
+            hX = Y[p, :]
+            w = w * np.exp( -np.abs(yo - hX)**2 / (2*varo))
+    if(np.sum(w)==0.0):
+        w[:] = 1.0 / nens
+    else:
+        w = w / np.sum(w)
+    ind = np.zeros(nens)
+    w_ind = np.argsort(w)
+    cw = np.cumsum(w[w_ind])
+    for m in range(nens-1):
+        fac = float(m+1)/float(nens)
+        for n in range(nens-1):
+            if (fac>cw[n] and fac<=cw[n+1]):
+                ind[m] = w_ind[n+1]
+    ind[-1] = w_ind[-1]
+    # print(ind)
+    Xtmp = X.copy()
+    Ytmp = Y.copy()
+    for m in range(nens):
+        X[:, :, :, m] = Xtmp[:, :, :, int(ind[m])]
+        Y[:, m] = Ytmp[:, int(ind[m])]
+    return X
 
 
 def get_dist(ni, nj, ii, jj, io, jo):

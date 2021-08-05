@@ -1,4 +1,6 @@
 import numpy as np
+from rankine_vortex import *
+from obs_def import *
 
 ###Pyramid method for spatial fields
 ###resolution level 1 correspond to the original field ni*nj, top-level has 2*2 grid points 2**lev=ni
