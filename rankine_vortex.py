@@ -136,7 +136,12 @@ def forcing(u, v, zeta, dx, gen, diss):
     kc = 8
     dk = 3
     gen_response = np.exp(-0.5*(k2d-kc)**2/dk**2)
-    f += gen*gen_response*zeta
+    if np.array(gen).size==1:
+        f += gen*gen_response*zeta
+    else:
+        dims = u.shape
+        ni, nj = (dims[0], dims[1])
+        f += np.tile(gen, (ni, nj, 1))*gen_response*zeta
     ##dissipation term:
     f -= diss*(ki**2+kj**2)*zeta
     return f

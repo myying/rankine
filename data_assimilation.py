@@ -6,52 +6,44 @@ from multiscale import *
 
 ##top-level wrapper for update at one analysis cycle:
 def filter_update(Xb, Yo, Ymask, Yloc, filter_kind, obs_err_std, obs_thin, local_cutoff,
-                  krange, run_alignment, smooth_obs=True, print_out=False):
+                  krange, krange_obs, run_alignment, print_out=False):
     X = Xb.copy()
     ni, nj, nv, nens = Xb.shape
     ns = len(krange)
+    ns_obs = len(krange_obs)
 
     for s in range(ns):
-        print('   process scale component {}'.format(s+1))
+        #print('   process scale component {}'.format(s+1))
         ##get scale component for prior state
         Xbs = get_scale(X, krange, s)
         Xloc = get_loc(ni, nj, nv, 1)
-        ##get scale component for obs
-        if smooth_obs:
+
+        for r in range(ns_obs):
+            ##get scale component for obs
             Yos = obs_get_scale(ni, nj, nv, Yo, Ymask, Yloc, krange, s)
-        else:
-            Yos = Yo.copy()
-        ##get scale component for obs prior
-        Ybs = np.zeros((Yo.size, nens))
-        for m in range(nens):
-            Ybm = obs_interp2d(X[:, :, :, m], Yloc)
-            Ybm[np.where(Ymask==0)] = 0.0
-            if smooth_obs:
+            ##get scale component for obs prior
+            Ybs = np.zeros((Yo.size, nens))
+            for m in range(nens):
+                Ybm = obs_interp2d(X[:, :, :, m], Yloc)
+                Ybm[np.where(Ymask==0)] = 0.0
                 Ybs[:, m] = obs_get_scale(ni, nj, nv, Ybm, Ymask, Yloc, krange, s)
-            else:
-                Ybs[:, m] = Ybm.copy()
-        if smooth_obs:
             obs_err_scale = get_obs_err_scale(ni, nj, nv, Yo.size, krange, s)
-        else:
-            obs_err_scale = 1.0
 
-        if filter_kind=='EnSRF':
-            Xas = EnSRF(Xbs, Xloc, Ybs, Yos, Ymask, Yloc,
-                        obs_err_std[s]*obs_err_scale, obs_thin[s], local_cutoff[s], print_out)
-        if filter_kind=='PF':
-            Xas = PF(Xbs, Xloc, Ybs, Yos, Ymask, Yloc,
-                        obs_err_std[s]*obs_err_scale, obs_thin[s])
+            if filter_kind=='EnSRF':
+                Xas = EnSRF(Xbs, Xloc, Ybs, Yos, Ymask, Yloc,
+                            obs_err_std[s]*obs_err_scale, obs_thin[s], local_cutoff[s], print_out)
+            if filter_kind=='PF':
+                Xas = PF(Xbs, Xloc, Ybs, Yos, Ymask, Yloc,
+                            obs_err_std[s]*obs_err_scale, obs_thin[s])
 
-        if s < ns-1 and run_alignment:
-            print('      run alignment')
-            us, vs = optical_flow(Xbs, Xas, nlevel=6-scales[s], w=500)
-            Xbsw = warp(Xbs, -us, -vs)
-            u = sharpen(us * 2**(scales[s]-1), scales[s], 1)
-            v = sharpen(vs * 2**(scales[s]-1), scales[s], 1)
-            X = warp(X, -u, -v)  ##displacement adjustment
-            X += sharpen(Xas - Xbsw, scales[s], 1)  ##amplitude adjustment
-        else:
-            X += Xas - Xbs
+            if s < ns-1 and run_alignment:
+                #print('      run alignment')
+                u, v = optical_flow(Xbs, Xas)
+                Xbsw = warp(Xbs, -u, -v)
+                X = warp(X, -u, -v)  ##displacement adjustment
+                X += Xas - Xbsw  ##amplitude adjustment
+            else:
+                X += Xas - Xbs
 
     return X
 
@@ -159,12 +151,19 @@ def local_GC(dist, cutoff):
 
 
 ###optical flow algorithm for alignment step:
-def optical_flow(x1in, x2in, nlevel, w=100):
+def optical_flow(x1in, x2in, nlevel, w=0.6):
     x1 = x1in.copy()
     x2 = x2in.copy()
     ni, nj, nv, nens = x1.shape
     u = np.zeros((ni, nj, nv, nens))
     v = np.zeros((ni, nj, nv, nens))
+    ##normalize input fields
+    for m in range(nens):
+        for k in range(nv):
+            xmax, xmin = (np.max(x1[:, :, k, m]), np.min(x1[:, :, k, m]))
+            if xmax>xmin:
+                x1[:, :, k, m] = (x1[:, :, k, m] - xmin) / (xmax - xmin)
+                x2[:, :, k, m] = (x2[:, :, k, m] - xmin) / (xmax - xmin)
     ###pyramid levels
     for lev in range(nlevel, -1, -1):
         x1w = warp(x1, -u, -v)
@@ -172,7 +171,7 @@ def optical_flow(x1in, x2in, nlevel, w=100):
         x2c = coarsen(smooth(x2, 2**(lev-1)), 1, lev)
         niter = 1000
         xdx = 0.5*(deriv_x(x1c) + deriv_x(x2c))
-        xdy = 0.5*(deriv_y(x1c) + deriv_y(x2c))  
+        xdy = 0.5*(deriv_y(x1c) + deriv_y(x2c))
         xdt = x2c - x1c
         ###compute incremental flow using iterative solver
         du = np.zeros(xdx.shape)

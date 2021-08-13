@@ -71,8 +71,10 @@ def obs_convol(ni, nj, Y, Ymask, Yloc, r):
 
 
 ###define scale band wavenumbers given dimensions
-def get_krange(ns, ni, nj, nobs):
-    krange = np.zeros(ns)
+def get_krange(ns):
+    kmax = 16 #np.minimum(16, int(np.sqrt(nobs)/2))
+    dk = kmax**(1/ns)
+    krange = dk**(np.arange(ns)+1)
     return krange
 
 def get_obs_err_scale(ni, nj, nv, nobs, krange, s):

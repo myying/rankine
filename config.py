@@ -1,3 +1,4 @@
+import numpy as np
 outdir = 'output/'
 
 ##model state parameters
@@ -13,17 +14,18 @@ gen = 5e-5
 diss = 3e3
 
 ### vortex parameters
-Vbg = 3   ##background flow amplitude
-Vmax = 35     # maximum wind speed (vortex intensity)
-Rmw = 5        # radius of maximum wind (vortex size)
+Vbg = 10      ##background flow amplitude
+Vmax = 35     ## maximum wind speed (vortex intensity)
+Rmw = 5       ## radius of maximum wind (vortex size)
 
 ##ensemble parameters
 nens = 20    ##ensemble size
 loc_sprd = 10  ##position spread in prior ensemble
+gen_ens = gen*np.ones(nens)
 
 ##obs network parameters
 nobs = 5000    ##number of observations in entire domain
-obs_range = 30  ##radius from vortex center where obs are available (will be assimilated)
+obs_range = 200  ##radius from vortex center where obs are available (will be assimilated)
 obs_err_std = 3.0   ##measurement error
 obs_err_power_law = 1
 obs_t_intv = 3
