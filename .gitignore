@@ -1,4 +1,5 @@
-1*
+*pdf
+output
 *.pyc
 __pychache__
 .ipynb_checkpoints

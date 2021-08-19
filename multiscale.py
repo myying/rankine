@@ -8,12 +8,25 @@ from obs_def import *
 def get_loc(ni, nj, nv, lev):
     intv = 2 ** (lev-1)
     ii, jj, kk = np.mgrid[0:ni:intv, 0:nj:intv, 0:nv]
-    Xloc = np.zeros((3, ni, nj, nv))
+    Xloc = np.zeros((3, int(ni/intv), int(nj/intv), nv))
     Xloc[0, :, :, :] = ii
     Xloc[1, :, :, :] = jj
     Xloc[2, :, :, :] = kk
     return Xloc
 
+def get_clev(wn):
+    lev = 5 - np.log(wn)/np.log(2)
+    return lev
+
+def get_nobs_thin(wn, ni, nj, nobs):
+    oclev = np.sqrt(ni*nj/nobs)
+    clev = get_clev(wn)
+    if clev<oclev:
+        print("this scale is not resolved by obs")
+        thin = 1
+    else:
+        thin = 2**(2*(clev - oclev))
+    return int(nobs/thin)
 
 ##scale decomposition
 def lowpass_resp(Kh, k1, k2):

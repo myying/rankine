@@ -195,3 +195,11 @@ def vortex_size(X, center):
     return size
 
 
+def divergence(X, dx):
+    uk, vk = (grid2spec(X[:, :, 0]), grid2spec(X[:, :, 1]))
+    ki, kj = get_scaled_wn(uk, dx)
+    divk = 1j*(ki*uk + kj*vk)
+    div = spec2grid(divk)
+    return div
+
+
