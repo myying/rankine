@@ -5,48 +5,47 @@ from multiscale import *
 
 
 ##top-level wrapper for update at one analysis cycle:
-def filter_update(Xb, Yo, Ymask, Yloc, filter_kind, obs_err_std, obs_thin, local_cutoff,
+def filter_update(Xb, Yo, Ymask, Yloc, filter_kind, obs_err_std, obs_thin, local_cutoff, 
                   krange, krange_obs, run_alignment, print_out=False):
     X = Xb.copy()
     ni, nj, nv, nens = Xb.shape
+    nobs = Yo.size
     ns = len(krange)
     ns_obs = len(krange_obs)
 
     for s in range(ns):
-        #print('   process scale component {}'.format(s+1))
         ##get scale component for prior state
-        Xbs = get_scale(X, krange, s)
-        Xloc = get_loc(ni, nj, nv, 1)
+        clev = int(get_clev(krange[s]))
+        Xbs = coarsen(get_scale(X, krange, s), 1, clev)
+        Xloc = get_loc(ni, nj, nv, clev)
 
         for r in range(ns_obs):
             ##get scale component for obs
-            Yos = obs_get_scale(ni, nj, nv, Yo, Ymask, Yloc, krange, s)
+            Yos = obs_get_scale(ni, nj, nv, Yo, Ymask, Yloc, krange_obs, r)
             ##get scale component for obs prior
-            Ybs = np.zeros((Yo.size, nens))
+            Ybs = np.zeros((nobs, nens))
             for m in range(nens):
                 Ybm = obs_interp2d(X[:, :, :, m], Yloc)
                 Ybm[np.where(Ymask==0)] = 0.0
-                Ybs[:, m] = obs_get_scale(ni, nj, nv, Ybm, Ymask, Yloc, krange, s)
-            obs_err_scale = get_obs_err_scale(ni, nj, nv, Yo.size, krange, s)
+                Ybs[:, m] = obs_get_scale(ni, nj, nv, Ybm, Ymask, Yloc, krange_obs, r)
+            obs_err_scale = get_obs_err_scale(ni, nj, nv, nobs, krange_obs, r)
 
             if filter_kind=='EnSRF':
-                Xas = EnSRF(Xbs, Xloc, Ybs, Yos, Ymask, Yloc,
+                nobs_thin = get_nobs_thin(krange_obs[r], ni, nj, nobs)
+                Xas = EnSRF(Xbs, Xloc, Ybs[0:nobs_thin], Yos[0:nobs_thin], Ymask[0:nobs_thin], Yloc[:, 0:nobs_thin],
                             obs_err_std[s]*obs_err_scale, obs_thin[s], local_cutoff[s], print_out)
-            if filter_kind=='PF':
-                Xas = PF(Xbs, Xloc, Ybs, Yos, Ymask, Yloc,
-                            obs_err_std[s]*obs_err_scale, obs_thin[s])
 
             if s < ns-1 and run_alignment:
-                #print('      run alignment')
-                u, v = optical_flow(Xbs, Xas)
-                Xbsw = warp(Xbs, -u, -v)
+                us, vs = optical_flow(Xbs, Xas, nlevel=6-clev, w=0.6)
+                Xbsw = warp(Xbs, -us, -vs)
+                u = refine(us * 2**(clev-1), clev, 1)
+                v = refine(vs * 2**(clev-1), clev, 1)
                 X = warp(X, -u, -v)  ##displacement adjustment
-                X += Xas - Xbsw  ##amplitude adjustment
+                X += refine(Xas - Xbsw, clev, 1)  ##additional amplitude adjustment
             else:
-                X += Xas - Xbs
+                X += refine(Xas - Xbs, clev, 1)
 
     return X
-
 
 ##EnSRF filter update:
 def EnSRF(Xb, Xloc, Yb, Yo, Ymask, Yloc, obs_err_std, obs_thin, local_cutoff, print_out):
@@ -151,7 +150,7 @@ def local_GC(dist, cutoff):
 
 
 ###optical flow algorithm for alignment step:
-def optical_flow(x1in, x2in, nlevel, w=0.6):
+def optical_flow(x1in, x2in, nlevel, w):
     x1 = x1in.copy()
     x2 = x2in.copy()
     ni, nj, nv, nens = x1.shape
@@ -167,8 +166,8 @@ def optical_flow(x1in, x2in, nlevel, w=0.6):
     ###pyramid levels
     for lev in range(nlevel, -1, -1):
         x1w = warp(x1, -u, -v)
-        x1c = coarsen(smooth(x1w, 2**(lev-1)), 1, lev)
-        x2c = coarsen(smooth(x2, 2**(lev-1)), 1, lev)
+        x1c = coarsen(x1w, 1, lev)
+        x2c = coarsen(x2, 1, lev)
         niter = 1000
         xdx = 0.5*(deriv_x(x1c) + deriv_x(x2c))
         xdy = 0.5*(deriv_y(x1c) + deriv_y(x2c))
@@ -181,8 +180,8 @@ def optical_flow(x1in, x2in, nlevel, w=0.6):
             vbar = laplacian(dv) + dv
             du = ubar - xdx*(xdx*ubar + xdy*vbar + xdt)/(w + xdx**2 + xdy**2)
             dv = vbar - xdy*(xdx*ubar + xdy*vbar + xdt)/(w + xdx**2 + xdy**2)
-        u += sharpen(du*2**lev, lev, 1)
-        v += sharpen(dv*2**lev, lev, 1)
+        u += refine(du*2**(lev-1), lev, 1)
+        v += refine(dv*2**(lev-1), lev, 1)
     return u, v
 
 ##some spatial operators
@@ -195,8 +194,8 @@ def coarsen(xi, lev1, lev2):
             x = x1
     return x
 
-##sharpen resolution from lev1 to lev2, fill in grid points with linear interpolation
-def sharpen(xi, lev1, lev2):
+##refine resolution from lev1 to lev2, fill in grid points with linear interpolation
+def refine(xi, lev1, lev2):
     x = xi.copy()
     if lev1 > lev2:
         for k in range(lev1, lev2, -1):
