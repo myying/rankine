@@ -21,7 +21,6 @@ ns = int(sys.argv[3])    ##number of scales
 
 krange = (1,) # get_krange(ns)
 obs_err_infl = np.ones(ns)
-obs_thin = np.ones(ns).astype(int)
 local_cutoff = 30*np.ones(ns)
 run_alignment = False
 
@@ -43,7 +42,7 @@ for t in range(nt):
     if t>0 and t%obs_t_intv==0 and filter_kind!='NoDA':
         print('running '+filter_kind+' for t={}'.format(t))
         X[:, :, :, :, 1, t] = filter_update(X[:, :, :, :, 0, t], Yo[:, t], Ymask[:, t], Yloc[:, :, t],
-                                         filter_kind, obs_err_std*obs_err_infl, obs_thin, local_cutoff,
+                                         filter_kind, obs_err_std*obs_err_infl, local_cutoff,
                                          krange, run_alignment)
     else:
         X[:, :, :, :, 1, t] = X[:, :, :, :, 0, t]
@@ -61,8 +60,9 @@ for t in range(nt):
         ens_center[:, nens, i, t] = vortex_center(np.mean(X[:, :, :, :, i, t], axis=3))
         ens_intensity[nens, i, t] = vortex_intensity(np.mean(X[:, :, :, :, i, t], axis=3))
         ens_size[nens, i, t] = vortex_size(np.mean(X[:, :, :, :, i, t], axis=3), ens_center[:, nens, i, t])
+        state_err[]
 
-    np.save(outdir+casename+'_X.npy', X)
-    np.save(outdir+casename+'_center.npy', ens_center)
-    np.save(outdir+casename+'_intensity.npy', ens_intensity)
-    np.save(outdir+casename+'_size.npy', ens_size)
+    np.save(outdir+'cycle/'+casename+'_X.npy', X)
+    np.save(outdir+'cycle/'+casename+'_center.npy', ens_center)
+    np.save(outdir+'cycle/'+casename+'_intensity.npy', ens_intensity)
+    np.save(outdir+'cycle/'+casename+'_size.npy', ens_size)

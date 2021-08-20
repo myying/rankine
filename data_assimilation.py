@@ -5,7 +5,7 @@ from multiscale import *
 
 
 ##top-level wrapper for update at one analysis cycle:
-def filter_update(Xb, Yo, Ymask, Yloc, filter_kind, obs_err_std, obs_thin, local_cutoff, 
+def filter_update(Xb, Yo, Ymask, Yloc, filter_kind, obs_err_std, local_cutoff,
                   krange, krange_obs, run_alignment, print_out=False):
     X = Xb.copy()
     ni, nj, nv, nens = Xb.shape
@@ -19,6 +19,7 @@ def filter_update(Xb, Yo, Ymask, Yloc, filter_kind, obs_err_std, obs_thin, local
         Xbs = coarsen(get_scale(X, krange, s), 1, clev)
         Xloc = get_loc(ni, nj, nv, clev)
 
+        Xas = Xbs.copy()
         for r in range(ns_obs):
             ##get scale component for obs
             Yos = obs_get_scale(ni, nj, nv, Yo, Ymask, Yloc, krange_obs, r)
@@ -29,31 +30,33 @@ def filter_update(Xb, Yo, Ymask, Yloc, filter_kind, obs_err_std, obs_thin, local
                 Ybm[np.where(Ymask==0)] = 0.0
                 Ybs[:, m] = obs_get_scale(ni, nj, nv, Ybm, Ymask, Yloc, krange_obs, r)
             obs_err_scale = get_obs_err_scale(ni, nj, nv, nobs, krange_obs, r)
+            nobs1 = get_nobs_thin(krange_obs[r], ni, nj, nobs)
 
             if filter_kind=='EnSRF':
-                nobs_thin = get_nobs_thin(krange_obs[r], ni, nj, nobs)
-                Xas = EnSRF(Xbs, Xloc, Ybs[0:nobs_thin], Yos[0:nobs_thin], Ymask[0:nobs_thin], Yloc[:, 0:nobs_thin],
-                            obs_err_std[s]*obs_err_scale, obs_thin[s], local_cutoff[s], print_out)
+                Xas = EnSRF(Xas, Xloc, Ybs[0:nobs1], Yos[0:nobs1], Ymask[0:nobs1], Yloc[:, 0:nobs1],
+                            obs_err_std[s]*obs_err_scale, local_cutoff[s], print_out)
+            if filter_kind=='PF':
+                Xas = PF(Xas, Xloc, Ybs[0:nobs1], Yos[0:nobs1], Ymask[0:nobs1], Yloc[:, 0:nobs1], obs_err_std[s]*obs_err_scale)
 
-            if s < ns-1 and run_alignment:
-                us, vs = optical_flow(Xbs, Xas, nlevel=6-clev, w=0.6)
-                Xbsw = warp(Xbs, -us, -vs)
-                u = refine(us * 2**(clev-1), clev, 1)
-                v = refine(vs * 2**(clev-1), clev, 1)
-                X = warp(X, -u, -v)  ##displacement adjustment
-                X += refine(Xas - Xbsw, clev, 1)  ##additional amplitude adjustment
-            else:
-                X += refine(Xas - Xbs, clev, 1)
+        if s < ns-1 and run_alignment:
+            us, vs = optical_flow(Xbs, Xas, nlevel=6-clev, w=0.6)
+            Xbsw = warp(Xbs, -us, -vs)
+            u = sharpen(us * 2**(clev-1), clev, 1)
+            v = sharpen(vs * 2**(clev-1), clev, 1)
+            X = warp(X, -u, -v)  ##displacement adjustment
+            X += sharpen(Xas - Xbsw, clev, 1)  ##additional amplitude adjustment
+        else:
+            X += sharpen(Xas - Xbs, clev, 1)
 
     return X
 
 ##EnSRF filter update:
-def EnSRF(Xb, Xloc, Yb, Yo, Ymask, Yloc, obs_err_std, obs_thin, local_cutoff, print_out):
+def EnSRF(Xb, Xloc, Yb, Yo, Ymask, Yloc, obs_err_std, local_cutoff, print_out):
     ni, nj, nv, nens = Xb.shape
     nobs = Yo.size
     X = Xb.copy()
     Y = Yb.copy()
-    for p in range(0, nobs, obs_thin):    ##cycle through each observation
+    for p in range(0, nobs):    ##cycle through each observation
         if Ymask[p] == 1:
             Xm = np.mean(X, axis=3)
             Xp = X - np.repeat(np.expand_dims(Xm, 3), nens, axis=3)
@@ -94,7 +97,7 @@ def EnSRF(Xb, Xloc, Yb, Yo, Ymask, Yloc, obs_err_std, obs_thin, local_cutoff, pr
 
 ##particle filter
 ###TODO: make it localized PF
-def PF(Xb, Xloc, Yb, Yo, Ymask, Yloc, obs_err_std, obs_thin):
+def PF(Xb, Xloc, Yb, Yo, Ymask, Yloc, obs_err_std):
     ni, nj, nv, nens = Xb.shape
     nobs = Yo.size
     X = Xb.copy()
@@ -102,7 +105,7 @@ def PF(Xb, Xloc, Yb, Yo, Ymask, Yloc, obs_err_std, obs_thin):
     w = np.zeros(nens)
     w[:] = 1.0 / nens
     varo = obs_err_std**2
-    for p in range(0, nobs, obs_thin):
+    for p in range(0, nobs):
         if Ymask[p] == 1:
             yo = Yo[p]
             hX = Y[p, :]
