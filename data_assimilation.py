@@ -6,14 +6,18 @@ from multiscale import *
 
 ##top-level wrapper for update at one analysis cycle:
 def filter_update(Xb, Yo, Ymask, Yloc, filter_kind, obs_err_std, local_cutoff,
-                  krange, krange_obs, run_alignment, print_out=False):
+                  krange, krange_obs, run_alignment, print_out=False, update_scale=-1):
     X = Xb.copy()
     ni, nj, nv, nens = Xb.shape
     nobs = Yo.size
     ns = len(krange)
     ns_obs = len(krange_obs)
 
-    for s in range(ns):
+    if update_scale==-1:
+        ss = range(ns)
+    else:
+        ss = (update_scale,)
+    for s in ss:
         ##get scale component for prior state
         clev = int(get_clev(krange[s]))
         Xbs = coarsen(get_scale(X, krange, s), 1, clev)
@@ -39,14 +43,14 @@ def filter_update(Xb, Yo, Ymask, Yloc, filter_kind, obs_err_std, local_cutoff,
                 Xas = PF(Xas, Xloc, Ybs[0:nobs1], Yos[0:nobs1], Ymask[0:nobs1], Yloc[:, 0:nobs1], obs_err_std[s]*obs_err_scale)
 
         if s < ns-1 and run_alignment:
-            us, vs = optical_flow(Xbs, Xas, nlevel=6-clev, w=0.6)
+            us, vs = optical_flow(Xbs, Xas, nlevel=3, w=1)
             Xbsw = warp(Xbs, -us, -vs)
-            u = sharpen(us * 2**(clev-1), clev, 1)
-            v = sharpen(vs * 2**(clev-1), clev, 1)
+            u = refine(us * 2**(clev-1), clev, 1)
+            v = refine(vs * 2**(clev-1), clev, 1)
             X = warp(X, -u, -v)  ##displacement adjustment
-            X += sharpen(Xas - Xbsw, clev, 1)  ##additional amplitude adjustment
+            X += refine(Xas - Xbsw, clev, 1)  ##additional amplitude adjustment
         else:
-            X += sharpen(Xas - Xbs, clev, 1)
+            X += refine(Xas - Xbs, clev, 1)
 
     return X
 
@@ -129,7 +133,7 @@ def PF(Xb, Xloc, Yb, Yo, Ymask, Yloc, obs_err_std):
     for m in range(nens):
         X[:, :, :, m] = Xtmp[:, :, :, int(ind[m])]
         Y[:, m] = Ytmp[:, int(ind[m])]
-    return X
+    return X[:, :, :, ::-1]
 
 
 def get_dist(ni, nj, ii, jj, io, jo):
@@ -171,7 +175,7 @@ def optical_flow(x1in, x2in, nlevel, w):
         x1w = warp(x1, -u, -v)
         x1c = coarsen(x1w, 1, lev)
         x2c = coarsen(x2, 1, lev)
-        niter = 1000
+        niter = 100
         xdx = 0.5*(deriv_x(x1c) + deriv_x(x2c))
         xdy = 0.5*(deriv_y(x1c) + deriv_y(x2c))
         xdt = x2c - x1c
