@@ -3,111 +3,62 @@ import numpy as np
 import sys
 import os
 from rankine_vortex import *
+from obs_def import *
 from data_assimilation import *
+from multiscale import *
+from config import *
 
-if (len(sys.argv)<7):
-    print("usage: run_single.py filter_kind ns nens Csprd obsR obsErr")
-    exit()
+nrealize = 2000
 
-outdir = '/storage/windows10/scratch/rankine/single/'
-nrealize = 200
-r0 = 0
+nens = 20 # ensemble size
+loc_sprd = int(sys.argv[1])
 
-ni = 128    # number of grid points i, j directions
-nj = 128
-nv = 2     # number of variables, (u, v)
-dx = 9000
-
-### Rankine Vortex definition, truth
-Rmw = 5        # radius of maximum wind
-Vmax = 50     # maximum wind speed
-Vout = 0        # wind speed outside of vortex
-iStorm = 63 # location of vortex in i, j
-jStorm = 63
-iBias = 0
-jBias = 0
-Rsprd = 0
-Vsprd = 0
-
-filter_kind = sys.argv[1] #'EnSRF'
-ns = int(sys.argv[2])
-nens = int(sys.argv[3]) # ensemble size
-Csprd = int(sys.argv[4])
-obsR = int(sys.argv[5])
-obserr = int(sys.argv[6]) # observation error spread
-localize_cutoff = 0
 
 ##truth
-iX, jX = rv.make_coords(ni, nj)
-Xt = rv.make_state(ni, nj, nv, iStorm, jStorm, Rmw, Vmax, Vout)
-ut, vt = rv.X2uv(ni, nj, Xt)
-
-##DA trials
-casename = '{}_s{}_N{}_C{}_R{}_err{}'.format(filter_kind, ns, nens, Csprd, obsR, obserr)
-
-if os.path.exists(outdir+casename+'.npy'):
-    state_error = np.load(outdir+casename+'.npy')
-else:
-    state_error = np.zeros((nrealize, nens+1))
-    state_error[:, :] = np.nan
+Xt = gen_vortex(ni, nj, nv, Vmax, Rmw, 0)
+true_center = vortex_center(Xt)
+true_intensity = vortex_intensity(Xt)
 
 for realize in range(nrealize):
-    np.random.seed(realize)    # fix random number seed, make results predictable
+    np.random.seed(realize)
     if realize%100 == 0:
         print(realize)
 
     ##Prior ensemble
-    Xb = np.zeros((nens, ni*nj*nv))
-    iStorm_ens = np.zeros(nens)
-    jStorm_ens = np.zeros(nens)
-    for n in range(nens):
-        iStorm_ens[n] = iStorm + iBias + np.random.normal(0, 1) * Csprd
-        jStorm_ens[n] = jStorm + jBias + np.random.normal(0, 1) * Csprd
-        Rmw_n = Rmw + np.random.normal(0, 1) * Rsprd
-        Vmax_n = Vmax + np.random.normal(0, 1) * Vsprd
-        Vout_n = Vout + np.random.normal(0, 1) * 0.0
-        Xb[n, :] = rv.make_state(ni, nj, nv, iStorm_ens[n], jStorm_ens[n], Rmw_n, Vmax_n, Vout_n)
+    Xb = np.zeros((ni, nj, nv, nens))
+    for m in range(nens):
+        Xb[:, :, :, m] = gen_vortex(ni, nj, nv, Vmax, Rmw, loc_sprd)
 
-    ###Observations
-    th = np.random.uniform(0, 360)*np.pi/180*np.array([1, 1])
-    iObs = iStorm + obsR*np.sin(th)
-    jObs = iStorm + obsR*np.cos(th)
-    vObs = np.array([0, 1])
-    nobs = iObs.size     # number of observation points
-    H = rv.obs_operator(iX, jX, nv, iObs, jObs, vObs)
-    obs = np.dot(H, Xt) + np.random.normal(0.0, obserr, nobs)
+    ###Observation
+    Ymask = np.ones(2)
+    Yloc = np.zeros((3, 2))
+    obs_r = np.random.uniform(0, 10)*np.ones(2)
+    obs_th = np.random.uniform(0, 360)*np.pi/180*np.ones(2)
+    Yloc[0, :] = 0.5*ni + obs_r*np.sin(obs_th)
+    Yloc[1, :] = 0.5*nj + obs_r*np.cos(obs_th)
+    Yloc[2, :] = np.array([0, 1])
+    Yo = obs_interp2d(Xt, Yloc) + obs_err_std * np.random.normal(0, 1, 2)
+
+    np.save(outdir+'single_obs/N{}/L{}/{:04d}/Yo.npy'.format(nens, loc_sprd, realize+1), Yo)
+    np.save(outdir+'single_obs/N{}/L{}/{:04d}/Yloc.npy'.format(nens, loc_sprd, realize+1), Yloc)
 
     ##Run filter
-    Xa = Xb.copy()
-    krange = np.arange(1, ns+1)
-    Xa, infl = DA.filter_update(ni, nj, nv, Xb, iX, jX, H, iObs, jObs, vObs, obs, obserr, localize_cutoff, np.ones((ni*nj*nv, 2)), krange, filter_kind)
+    np.save(outdir+'single_obs/'+'N{}/L{}/{:04d}/NoDA.npy'.format(nens, loc_sprd, realize+1), Xb)
 
-    ###Diagnose
+    for ns in range(1, 8):
+        Xa = filter_update(Xb, Yo, Ymask, Yloc, 'EnSRF', obs_err_std*np.ones(ns), 0.0*np.ones(ns), get_krange(ns), (1,), run_alignment=True)
+        np.save(outdir+'single_obs/'+'N{}/L{}/{:04d}/EnSRF_s{}.npy'.format(nens, loc_sprd, realize+1, ns), Xa)
+
+    np.save(outdir+'single_obs/'+'N{}/L{}/{:04d}/PF.npy'.format(nens, loc_sprd, realize+1), Xa)
+
+    ##Diagnose
     ###domain-averaged (near storm region) state (u,v) error:
-    for m in range(nens):
-        u, v = rv.X2uv(ni, nj, Xa[m, :])
-        square_err = (u-ut)**2 + (v-vt)**2
-        state_error[realize, m] = np.sqrt(np.mean(square_err[iStorm-20:iStorm+20, jStorm-20:jStorm+20]))
-    state_error[realize, nens] = np.sqrt(np.mean((np.mean(Xa, axis=0)-Xt)**2))
-    np.save(outdir+casename+'.npy', state_error)
-    # u, v = rv.X2uv(ni, nj, np.mean(Xa, axis=0))
-    # square_err = (u-ut)**2 + (v-vt)**2
-    # state_error = np.sqrt(np.mean(square_err))
-    #state_error = np.sqrt(np.mean(square_err[iStorm-20:iStorm+20, jStorm-20:jStorm+20]))
-    #print(state_error)
-
-
-    ###intensity track
     # for m in range(nens):
-    #     u, v = rv.X2uv(ni, nj, Xa[m, :])
-    #     w = rv.get_max_wind(u, v)
-    #     i, j = rv.get_center_ij(u, v, dx)
-    #     feature_error[realize, 0, m] = np.abs(w-wt)
-    #     feature_error[realize, 1, m] = 0.5*(np.abs(i-it)+np.abs(j-jt))
-    # um, vm = rv.X2uv(ni, nj, np.mean(Xa, axis=0))
-    # wm = rv.get_max_wind(um, vm)
-    # im, jm = rv.get_center_ij(um, vm, dx)
-    # feature_error[realize, 0, nens] = np.abs(wm-wt)
-    # feature_error[realize, 1, nens] = 0.5*(np.abs(im-it)+np.abs(jm-jt))
-    #np.save(outdir+'feature_error/'+casename+'.npy', feature_error)
+        # err[realize, m, 0] = np.sqrt(np.mean((Xa[:, :, :, m] - Xt)**2, axis=(0,1,2)))
+        # err[realize, m, 1] = np.sqrt(np.mean((vortex_center(Xa[:, :, :, m]) - true_center)**2))
+        # err[realize, m, 2] = np.sqrt(np.mean((vortex_intensity(Xa[:, :, :, m]) - true_intensity)**2))
+    # err[realize, nens, 0] = rmse(Xa, Xt)
+    # err[realize, nens, 1] = np.sqrt(np.mean((vortex_center(np.mean(Xa, axis=3)) - true_center)**2))
+    # err[realize, nens, 2] = np.sqrt(np.mean((vortex_intensity(np.mean(Xa, axis=3)) - true_intensity)**2))
+
 
