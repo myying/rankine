@@ -37,7 +37,7 @@ for t in range(nt):
     Yo[:, t] = obs_interp2d(Xo, Yloc[:, :, t])
     Ydist = get_dist(ni, nj, Yloc[0, :, t], Yloc[1, :, t], true_center[0, t], true_center[1, t])
     Ymask[np.where(Ydist<=obs_range), t] = 1
-    Yo[np.where(Ymask==0), t] = 0.0
+Yo[np.where(Ymask==0)] = 0.0
 
 
 ##save data

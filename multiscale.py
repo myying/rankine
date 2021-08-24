@@ -22,7 +22,7 @@ def get_nobs_thin(wn, ni, nj, nobs):
     oclev = np.sqrt(ni*nj/nobs)
     clev = get_clev(wn)
     if clev<oclev:
-        print("this scale is not resolved by obs")
+        # print("this scale is not resolved by obs")
         thin = 1
     else:
         thin = 2**(2*(clev - oclev))
