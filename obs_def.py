@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 
 ###observation network
 def gen_obs_loc(ni, nj, nv, nobs):
@@ -28,6 +27,7 @@ def obs_interp2d(X, Yloc):
     return Y
 
 def plot_obs(ax, ni, nj, nv, Y, Ymask, Yloc):
+    import matplotlib.pyplot as plt
     obsmin, obsmax = (-30, 30)
     cmap = [plt.cm.bwr(x) for x in np.linspace(0, 1, round(obsmax-obsmin)+1)]
     subset = np.where(np.logical_and(Yloc[2, :]==0, Ymask==1))

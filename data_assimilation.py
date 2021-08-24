@@ -265,6 +265,20 @@ def sawtooth(out_b, out_a):
     out_st[1::2] = out_a
     return tt, out_st
 
+def err_diag(X, Xt):
+    ni, nj, nv, nens = X.shape
+    err = np.zeros((nens+1, 3))
+    true_center = vortex_center(Xt)
+    true_intensity = vortex_intensity(Xt)
+    for m in range(nens):
+        err[m, 0] = np.sqrt(np.mean((X[:, :, :, m] - Xt)**2, axis=(0,1,2))) ###domain-averaged (near storm region) state (u,v) error
+        err[m, 1] = np.sqrt(np.mean((vortex_center(X[:, :, :, m]) - true_center)**2))
+        err[m, 2] = np.sqrt(np.mean((vortex_intensity(X[:, :, :, m]) - true_intensity)**2))
+    err[nens, 0] = rmse(X, Xt)
+    err[nens, 1] = np.sqrt(np.mean((vortex_center(np.mean(X, axis=3)) - true_center)**2))
+    err[nens, 2] = np.sqrt(np.mean((vortex_intensity(np.mean(X, axis=3)) - true_intensity)**2))
+    return err
+
 def pwr_spec(f):
     ni, nj, nv = f.shape
     fk = np.zeros((ni, nj, nv), dtype=complex)
