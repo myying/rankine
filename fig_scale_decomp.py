@@ -16,7 +16,7 @@ plt.switch_backend('Agg')
 plt.figure(figsize=(12,8))
 
 ax = plt.subplot(222)
-c = ax.contourf(Xout[:, :, 0].T, np.arange(-50, 51, 2), cmap='bwr')
+c = ax.contourf(Xout[:, :, 0].T, np.arange(-40, 41, 2), cmap='bwr')
 ax.set_aspect('equal')
 plt.colorbar(c)
 
@@ -28,7 +28,7 @@ for s in range(ns):
     Xs = get_scale(Xout, get_krange(ns), s)
     wn, pwr = pwr_spec(Xs)
     ax = plt.subplot(2,3,s+4)
-    c = ax.contourf(Xs[:, :, 0].T, np.arange(-30, 31, 2), cmap='bwr')
+    c = ax.contourf(Xs[:, :, 0].T, np.arange(-20, 21, 2), cmap='bwr')
     # plt.colorbar(c)
     ax1.loglog(wn, pwr, linewidth=2, label='s={}'.format(s+1))
 ax1.set_xlim([1, 40])
