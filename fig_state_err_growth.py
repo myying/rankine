@@ -45,9 +45,8 @@ for t in range(nt):
 
 ##plot summary
 plt.switch_backend('Agg')
-plt.figure(figsize=(10, 3.3))
+plt.figure(figsize=(12, 4))
 cmap = [plt.cm.jet(x) for x in np.linspace(0, 1,nens)]
-ii, jj = np.mgrid[0:ni, 0:nj]
 
 ax = plt.subplot(131)
 for m in range(nens):
@@ -55,9 +54,12 @@ for m in range(nens):
 ax.plot(true_center[0, :], true_center[1, :], color='black', linewidth=3, label='truth')
 ax.set_xlim([0, ni])
 ax.set_ylim([0, nj])
-ax.set_xticks(np.arange(0, ni, 20))
-ax.set_yticks(np.arange(0, nj, 20))
+ax.set_xticks(np.arange(0, 1001, 200)/dx*1000)
+ax.set_yticks(np.arange(0, 1001, 200)/dx*1000)
+ax.set_xticklabels(np.arange(0, 1001, 200))
+ax.set_yticklabels(np.arange(0, 1001, 200))
 ax.legend()
+ax.tick_params(labelsize=12)
 
 ax = plt.subplot(132)
 tt = np.arange(0, nt)
@@ -68,6 +70,7 @@ ax.set_xlim([0, nt])
 ax.set_xticks(np.arange(0, nt+1, 2))
 ax.set_ylim([0, 100])
 ax.legend()
+ax.tick_params(labelsize=12)
 
 ax = plt.subplot(133)
 tt = np.arange(0, nt+1)
@@ -77,5 +80,6 @@ ax.set_xlim([0, nt])
 ax.set_xticks(np.arange(0, nt+1, 2))
 ax.set_ylim([0, 12])
 ax.legend()
+ax.tick_params(labelsize=12)
 
 plt.savefig('out.pdf')

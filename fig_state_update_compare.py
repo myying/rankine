@@ -50,24 +50,24 @@ for c in range(nc):
 plt.switch_backend('Agg')
 plt.figure(figsize=(12, 10))
 ii, jj = np.mgrid[0:ni, 0:nj]
+iout = (ii-ni/2)*dx/1000
+jout = (jj-nj/2)*dx/1000
 cmap = [plt.cm.jet(m) for m in np.linspace(0.2, 0.8, nens)]
 
 for c in range(nc):
     ax = plt.subplot(2, 3, c+1)
     for m in range(0, nens, 10):
         wspd = np.sqrt(X[:, :, 0, m, c]**2+X[:, :, 1, m, c]**2)
-        ax.contour(ii, jj, wspd, (20,), colors=[cmap[m][0:3]], linewidths=2)
+        ax.contour(iout, jout, wspd, (20,), colors=[cmap[m][0:3]], linewidths=2)
     wspd = np.sqrt(Xt[:, :, 0]**2+Xt[:, :, 1]**2)
-    ax.contour(ii, jj, wspd, (20,), colors='k', linewidths=3)
-    ax.plot(Yloc[0, ::2], Yloc[1, ::2], 'k+', markersize=10, markeredgewidth=2)
-    ax.plot(out_i, out_j, 'kx', markersize=7, markeredgewidth=2)
+    ax.contour(iout, jout, wspd, (20,), colors='k', linewidths=3)
+    ax.plot((Yloc[0, ::2]-ni/2)*dx/1000, (Yloc[1, ::2]-nj/2)*dx/1000, 'k+', markersize=10, markeredgewidth=2)
+    ax.plot((out_i-ni/2)*dx/1000, (out_j-nj/2)*dx/1000, 'kx', markersize=7, markeredgewidth=2)
     ax.set_aspect('equal', 'box')
-    ax.set_xlim(0.5*ni-15, 0.5*ni+15)
-    ax.set_ylim(0.5*nj-15, 0.5*nj+15)
-    ax.set_xticks(np.arange(0.5*ni-15, 0.5*ni+16, 5))
-    ax.set_xticklabels(np.arange(-15, 16, 5))
-    ax.set_yticks(np.arange(0.5*nj-15, 0.5*nj+16, 5))
-    ax.set_yticklabels(np.arange(-15, 16, 5))
+    ax.set_xlim(-135, 135)
+    ax.set_ylim(-135, 135)
+    ax.set_xticks(np.arange(-120, 121, 60))
+    ax.set_yticks(np.arange(-120, 121, 60))
     ax.tick_params(labelsize=12)
 
 plt.savefig('out.pdf')
