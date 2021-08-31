@@ -13,15 +13,22 @@ np.random.seed(0)
 Xt = gen_vortex(ni, nj, nv, Vmax, Rmw, 0)
 
 ##observation
-obs_err = 3
-obs_th = 45
-obs_r = 5
 Ymask = np.ones(2)
 Yloc = np.zeros((3, 2))
+
+##wind obs at random location
+obs_err = 3
+obs_th = 45
+obs_r = 4
 Yloc[0, :] = 0.5*ni + obs_r*np.sin(obs_th*np.pi/180*np.ones(2))
 Yloc[1, :] = 0.5*nj + obs_r*np.cos(obs_th*np.pi/180*np.ones(2))
 Yloc[2, :] = np.array([0, 1])
 Yo = obs_interp2d(Xt, Yloc) + obs_err * np.random.normal(0, 1, 2)
+
+##position obs
+# obs_err = 0.5
+# Yloc[2, :] = np.array([-1, -1])
+# Yo = vortex_center(Xt) + obs_err * np.random.normal(0, 1, 2)
 
 ##output state location
 out_th = 160
@@ -31,7 +38,7 @@ out_j = 0.5*nj + out_r*np.cos(out_th*np.pi/180)
 
 
 ##prior ensemble
-nens = 200
+nens = 20
 loc_sprd = 3
 Xb = np.zeros((ni, nj, nv, nens))
 for m in range(nens):
@@ -56,7 +63,7 @@ cmap = [plt.cm.jet(m) for m in np.linspace(0.2, 0.8, nens)]
 
 for c in range(nc):
     ax = plt.subplot(2, 3, c+1)
-    for m in range(0, nens, 10):
+    for m in range(0, nens, 1):
         wspd = np.sqrt(X[:, :, 0, m, c]**2+X[:, :, 1, m, c]**2)
         ax.contour(iout, jout, wspd, (20,), colors=[cmap[m][0:3]], linewidths=2)
     wspd = np.sqrt(Xt[:, :, 0]**2+Xt[:, :, 1]**2)
@@ -69,5 +76,6 @@ for c in range(nc):
     ax.set_xticks(np.arange(-120, 121, 60))
     ax.set_yticks(np.arange(-120, 121, 60))
     ax.tick_params(labelsize=12)
+    ax.set_title('{}'.format(rmse(X[:, :, :, :, c], Xt)))
 
 plt.savefig('out.pdf')

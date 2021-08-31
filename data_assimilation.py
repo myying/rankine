@@ -30,7 +30,7 @@ def filter_update(Xb, Yo, Ymask, Yloc, filter_kind, obs_err_std, local_cutoff,
             ##get scale component for obs prior
             Ybs = np.zeros((nobs, nens))
             for m in range(nens):
-                Ybm = obs_interp2d(X[:, :, :, m], Yloc)
+                Ybm = obs_forward(X[:, :, :, m], Yloc)
                 Ybm[np.where(Ymask==0)] = 0.0
                 Ybs[:, m] = obs_get_scale(ni, nj, nv, Ybm, Ymask, Yloc, krange_obs, r)
             obs_err_scale = get_obs_err_scale(ni, nj, nv, nobs, krange_obs, r)

@@ -11,6 +11,14 @@ def gen_obs_loc(ni, nj, nv, nobs):
         Yloc[2, k::nv] = k
     return Yloc
 
+def obs_forward(X, Yloc):
+    if Yloc[2, 0] == -1:  ##this is position obs
+        from rankine_vortex import vortex_center
+        Y = vortex_center(X)
+    else:  ##this is normal wind obs
+        Y = obs_interp2d(X, Yloc)
+    return Y
+
 def obs_interp2d(X, Yloc):
     dims = X.shape
     ni, nj = (dims[0], dims[1])
