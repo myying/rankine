@@ -175,18 +175,26 @@ def optical_flow(x1in, x2in, nlevel, w):
         x1w = warp(x1, -u, -v)
         x1c = coarsen(x1w, 1, lev)
         x2c = coarsen(x2, 1, lev)
-        niter = 100
         xdx = 0.5*(deriv_x(x1c) + deriv_x(x2c))
         xdy = 0.5*(deriv_y(x1c) + deriv_y(x2c))
         xdt = x2c - x1c
         ###compute incremental flow using iterative solver
         du = np.zeros(xdx.shape)
         dv = np.zeros(xdx.shape)
-        for k in range(niter):
+        du1 = np.ones(xdx.shape)
+        dv1 = np.ones(xdx.shape)
+        niter = 0
+        diff = 10
+        while diff > 1e-3 and niter<300:
             ubar = laplacian(du) + du
             vbar = laplacian(dv) + dv
-            du = ubar - xdx*(xdx*ubar + xdy*vbar + xdt)/(w + xdx**2 + xdy**2)
-            dv = vbar - xdy*(xdx*ubar + xdy*vbar + xdt)/(w + xdx**2 + xdy**2)
+            du1 = ubar - xdx*(xdx*ubar + xdy*vbar + xdt)/(w + xdx**2 + xdy**2)
+            dv1 = vbar - xdy*(xdx*ubar + xdy*vbar + xdt)/(w + xdx**2 + xdy**2)
+            diff = np.max(np.abs(du1-du)+np.abs(dv1-dv))
+            du = du1
+            dv = dv1
+            niter += 1
+        # print(niter)
         u += refine(du*2**(lev-1), lev, 1)
         v += refine(dv*2**(lev-1), lev, 1)
     return u, v
