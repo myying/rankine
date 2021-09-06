@@ -56,10 +56,10 @@ for t in range(nt):
         for m in range(nens):
             ens_center[:, m, i, t] = vortex_center(X[:, :, :, m, i, t])
             ens_intensity[m, i, t] = vortex_intensity(X[:, :, :, m, i, t])
-            ens_size[m, i, t] = vortex_size(X[:, :, :, m, i, t], ens_center[:, m, i, t])
+            ens_size[m, i, t] = vortex_size(X[:, :, :, m, i, t])
         ens_center[:, nens, i, t] = vortex_center(np.mean(X[:, :, :, :, i, t], axis=3))
         ens_intensity[nens, i, t] = vortex_intensity(np.mean(X[:, :, :, :, i, t], axis=3))
-        ens_size[nens, i, t] = vortex_size(np.mean(X[:, :, :, :, i, t], axis=3), ens_center[:, nens, i, t])
+        ens_size[nens, i, t] = vortex_size(np.mean(X[:, :, :, :, i, t], axis=3))
         state_err[]
 
     np.save(outdir+'cycle/'+casename+'_X.npy', X)

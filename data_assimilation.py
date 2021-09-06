@@ -226,6 +226,16 @@ def refine(xi, lev1, lev2):
             x = x2
     return x
 
+def smooth(x):
+    xo = x.copy()
+    count = 0
+    for i in range(-2, 3):
+        for j in range(-2, 3):
+            xo += np.roll(np.roll(x, i, axis=0), j, axis=1)
+            count += 1
+    xo = xo/count
+    return xo
+
 def warp(x, u, v):
     xw = x.copy()
     ni, nj, nv, nens = x.shape
@@ -257,8 +267,23 @@ def laplacian(f):
 
 
 ###some performance metrics
-def rmse(Xens, Xt):
-    return np.sqrt(np.mean((np.mean(Xens, axis=3)-Xt)**2, axis=(0,1,2)))
+def diagnose(X, Xt):
+    ni, nj, nv, nens = X.shape
+    out = np.zeros((nens+1, 4))
+    true_center = vortex_center(Xt)
+    true_intensity = vortex_intensity(Xt)
+    true_size = vortex_size(Xt)
+    for m in range(nens):
+        out[m, 0] = np.sqrt(np.mean((X[:, :, :, m] - Xt)**2, axis=(0,1,2))) ###domain-averaged (near storm region) state (u,v) outor
+        out[m, 1] = np.sqrt(np.mean((vortex_center(X[:, :, :, m]) - true_center)**2))
+        out[m, 2] = np.sqrt(np.mean((vortex_intensity(X[:, :, :, m]) - true_intensity)**2))
+        out[m, 3] = np.sqrt(np.mean((vortex_size(X[:, :, :, m]) - true_size)**2))
+    Xmean = np.mean(X, axis=3)
+    out[nens, 0] = np.sqrt(np.mean((Xmean - Xt])**2, axis=(0,1,2)))
+    out[nens, 1] = np.sqrt(np.mean((vortex_center(Xmean) - true_center)**2))
+    out[nens, 2] = np.sqrt(np.mean((vortex_intensity(Xmean) - true_intensity)**2))
+    out[nens, 3] = np.sqrt(np.mean((vortex_size(Xmean) - true_size)**2))
+    return out
 
 def sprd(Xens):
     return np.sqrt(np.mean(np.std(Xens, axis=3)**2, axis=(0,1,2)))
@@ -272,20 +297,6 @@ def sawtooth(out_b, out_a):
     out_st[0::2] = out_b
     out_st[1::2] = out_a
     return tt, out_st
-
-def err_diag(X, Xt):
-    ni, nj, nv, nens = X.shape
-    err = np.zeros((nens+1, 3))
-    true_center = vortex_center(Xt)
-    true_intensity = vortex_intensity(Xt)
-    for m in range(nens):
-        err[m, 0] = np.sqrt(np.mean((X[:, :, :, m] - Xt)**2, axis=(0,1,2))) ###domain-averaged (near storm region) state (u,v) error
-        err[m, 1] = np.sqrt(np.mean((vortex_center(X[:, :, :, m]) - true_center)**2))
-        err[m, 2] = np.sqrt(np.mean((vortex_intensity(X[:, :, :, m]) - true_intensity)**2))
-    err[nens, 0] = rmse(X, Xt)
-    err[nens, 1] = np.sqrt(np.mean((vortex_center(np.mean(X, axis=3)) - true_center)**2))
-    err[nens, 2] = np.sqrt(np.mean((vortex_intensity(np.mean(X, axis=3)) - true_intensity)**2))
-    return err
 
 def pwr_spec(f):
     ni, nj, nv = f.shape

@@ -20,7 +20,7 @@ true_size = np.zeros(nt)
 for t in range(nt):
     true_center[:, t] = vortex_center(Xt[:, :, :, t])
     true_intensity[t] = vortex_intensity(Xt[:, :, :, t])
-    true_size[t] = vortex_size(Xt[:, :, :, t], true_center[:, t])
+    true_size[t] = vortex_size(Xt[:, :, :, t])
 
 
 ##generate obs

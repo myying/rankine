@@ -61,11 +61,11 @@ def gen_random_flow(ni, nj, nv, dx, amp, power_law):
     return x
 
 ##rankine vortex. Vmax: maximum wind speed, Rmw: radius of max wind, loc_sprd: the spread in center location
-def gen_vortex(ni, nj, nv, Vmax, Rmw, loc_sprd):
+def gen_vortex(ni, nj, nv, Vmax, Rmw, loc_sprd=0, loc_bias=0):
     x = np.zeros((ni, nj, nv))
     ii, jj = np.mgrid[0:ni, 0:nj]
-    center_i = 0.5*ni+np.random.normal(0, loc_sprd)
-    center_j = 0.5*nj+np.random.normal(0, loc_sprd)
+    center_i = 0.5*ni + loc_bias + np.random.normal(0, loc_sprd)
+    center_j = 0.5*nj + loc_bias + np.random.normal(0, loc_sprd)
     dist = np.sqrt((ii-center_i)**2 + (jj-center_j)**2)
     dist[np.where(dist==0)] = 1e-10  ##avoid divide by 0
     wspd = np.zeros(dist.shape)
@@ -154,7 +154,8 @@ def vortex_center(X):
     zeta = (np.roll(v, -1, axis=0) - np.roll(v, 1, axis=0) - np.roll(u, -1, axis=1) + np.roll(u, 1, axis=1))/2.0
     zmax = -999
     ic, jc = (-1, -1)
-    buff = 2
+    ##coarse search
+    buff = 6
     for i in range(buff, ni-buff):
         for j in range(buff, nj-buff):
             z = np.sum(zeta[i-buff:i+buff, j-buff:j+buff])
@@ -168,30 +169,23 @@ def vortex_intensity(X):
     wind = np.sqrt(u**2+v**2)
     return np.max(wind)
 
-def vortex_size(X, center):
-    u, v = (X[:, :, 0], X[:, :, 1])
-    ni, nj = u.shape
+def vortex_size(X):
+    center = vortex_center(X)
+    wind = np.sqrt(X[:, :, 0]**2 + X[:, :, 1]**2)
+    ni, nj = wind.shape
     nr = int(ni/4)
-    wind_min = 30
+    wind_min = 18  ##35 knot
     wind_rad = np.zeros(nr)
     count_rad = np.zeros(nr)
-    wind = np.sqrt(u**2+v**2)
     for i in range(-nr, nr+1):
         for j in range(-nr, nr+1):
             r = int(np.sqrt(i**2+j**2))
             if (r<nr):
                 wind_rad[r] += wind[int(center[0]+i)%ni, int(center[1]+j)%nj]
                 count_rad[r] += 1
-    wind_rad = wind_rad / count_rad
-    wind_max = np.max(wind_rad)
-    for r in range(nr):
-        if (wind_rad[r] == wind_max):
-            rmw = r
-    size = 0
-    for r in range(rmw, nr):
-        if (wind_rad[r] <= wind_min):
-            size = r
-            break
+    wind_rad = wind_rad/count_rad
+    i1 = np.where(wind_rad>=wind_min)[0][-1] ###last point with wind > 35knot
+    size = i1 + (wind_rad[i1] - wind_min) / (wind_rad[i1] - wind_rad[i1+1])
     return size
 
 
