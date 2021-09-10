@@ -25,13 +25,14 @@ def get_wn(x):
     dims = x.shape
     n = dims[0]
     wn = fft_wn(dims[0])
-    rp_dims = tuple(np.delete(np.arange(len(dims)), 0))
-    wni = np.expand_dims(wn, rp_dims)
-    for d in rp_dims:
+    wni = np.expand_dims(wn, 1)
+    wni = np.repeat(wni, dims[1], axis=1)
+    wnj = np.expand_dims(wn, 0)
+    wnj = np.repeat(wnj, dims[0], axis=0)
+    for d in range(2, len(dims)):  ##extra dimensions
+        wni = np.expand_dims(wni, d)
         wni = np.repeat(wni, dims[d], axis=d)
-    rp_dims = tuple(np.delete(np.arange(len(dims)), 1))
-    wnj = np.expand_dims(wn, rp_dims)
-    for d in rp_dims:
+        wnj = np.expand_dims(wnj, d)
         wnj = np.repeat(wnj, dims[d], axis=d)
     return wni, wnj
 
