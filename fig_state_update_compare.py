@@ -39,10 +39,11 @@ out_j = 0.5*nj + out_r*np.cos(out_th*np.pi/180)
 
 ##prior ensemble
 nens = 200
-loc_sprd = 3
+loc_sprd = 0.6*Rmw
+loc_bias = 0.0*Rmw
 Xb = np.zeros((ni, nj, nv, nens))
 for m in range(nens):
-    Xb[:, :, :, m] = gen_vortex(ni, nj, nv, Vmax, Rmw, loc_sprd)
+    Xb[:, :, :, m] = gen_vortex(ni, nj, nv, Vmax, Rmw, loc_sprd, loc_bias)
 
 filter_kind = ('NoDA', 'EnSRF', 'EnSRF', 'EnSRF', 'EnSRF', 'PF')
 ns = (1, 1, 3, 5, 7, 1)
@@ -63,7 +64,7 @@ cmap = [plt.cm.jet(m) for m in np.linspace(0.2, 0.8, nens)]
 
 for c in range(nc):
     ax = plt.subplot(2, 3, c+1)
-    for m in range(0, nens, 10):
+    for m in range(0, nens, int(nens/20)):
         wspd = np.sqrt(X[:, :, 0, m, c]**2+X[:, :, 1, m, c]**2)
         ax.contour(iout, jout, wspd, (20,), colors=[cmap[m][0:3]], linewidths=2)
     # Xm = np.mean(X[:, :, :, :, c], axis=3)
@@ -79,6 +80,9 @@ for c in range(nc):
     ax.set_xticks(np.arange(-120, 121, 60))
     ax.set_yticks(np.arange(-120, 121, 60))
     ax.tick_params(labelsize=12)
-    ax.set_title('{}'.format(rmse(X[:, :, :, :, c], Xt)))
+    metric = np.zeros(nens)
+    for m in range(nens):
+        metric[m] = vortex_intensity(X[:, :, :, m, c])
+    print(c, np.mean(metric))
 
-plt.savefig('out.pdf')
+plt.savefig('1.pdf')
