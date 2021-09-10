@@ -57,12 +57,12 @@ for realize in range(nrealize):
 
     ##Run filter
     Xa = filter_update(Xb, Yo, Ymask, Yloc, 'EnSRF', obs_err_std*np.ones(1), 0.0*np.ones(1), get_krange(1), (1,), run_alignment=False)
-    err = err_diag(Xa, Xt)
+    err = diagnose(Xa, Xt)
     np.save(outdir+dirname+'/EnSRF_full_update.npy', err)
 
     # for s in range(3):
     #     Xa = filter_update(Xb, Yo, Ymask, Yloc, 'EnSRF', obs_err_std*np.ones(1), 0.0*np.ones(1), get_krange(1), (1,), run_alignment=False)
-    #     err = err_diag(Xa, Xt)
+    #     err = diagnose(Xa, Xt)
     #     np.save(outdir+dirname+'/EnSRF_update_scale{}.npy'.format(, err)
 
 
