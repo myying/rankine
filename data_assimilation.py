@@ -279,7 +279,7 @@ def diagnose(X, Xt):
         out[m, 2] = np.sqrt(np.mean((vortex_intensity(X[:, :, :, m]) - true_intensity)**2))
         out[m, 3] = np.sqrt(np.mean((vortex_size(X[:, :, :, m]) - true_size)**2))
     Xmean = np.mean(X, axis=3)
-    out[nens, 0] = np.sqrt(np.mean((Xmean - Xt])**2, axis=(0,1,2)))
+    out[nens, 0] = np.sqrt(np.mean((Xmean - Xt)**2, axis=(0,1,2)))
     out[nens, 1] = np.sqrt(np.mean((vortex_center(Xmean) - true_center)**2))
     out[nens, 2] = np.sqrt(np.mean((vortex_intensity(Xmean) - true_intensity)**2))
     out[nens, 3] = np.sqrt(np.mean((vortex_size(Xmean) - true_size)**2))
