@@ -175,7 +175,7 @@ def vortex_size(X):
     wind = np.sqrt(X[:, :, 0]**2 + X[:, :, 1]**2)
     ni, nj = wind.shape
     nr = int(ni/4)
-    wind_min = 18  ##35 knot
+    wind_min = 15
     wind_rad = np.zeros(nr)
     count_rad = np.zeros(nr)
     for i in range(-nr, nr+1):
@@ -185,8 +185,11 @@ def vortex_size(X):
                 wind_rad[r] += wind[int(center[0]+i)%ni, int(center[1]+j)%nj]
                 count_rad[r] += 1
     wind_rad = wind_rad/count_rad
-    i1 = np.where(wind_rad>=wind_min)[0][-1] ###last point with wind > 35knot
-    size = i1 + (wind_rad[i1] - wind_min) / (wind_rad[i1] - wind_rad[i1+1])
+    if np.max(wind_rad)<wind_min:
+        size = -1
+    else:
+        i1 = np.where(wind_rad>=wind_min)[0][-1] ###last point with wind > 35knot
+        size = i1 + (wind_rad[i1] - wind_min) / (wind_rad[i1] - wind_rad[i1+1])
     return size
 
 
