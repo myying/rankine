@@ -6,26 +6,22 @@ from config import *
 
 cases = ('NoDA', 'EnSRF_s1', 'EnSRF_s2', 'EnSRF_s3', 'EnSRF_s4', 'EnSRF_s5', 'EnSRF_s6', 'EnSRF_s7', 'PF')
 nens = 20
-Csprd = (1, 2, 3, 4, 5)
+Lsprd = (1, 2, 3, 4, 5)
+Lbias = 0
 expname = ('single_wind_obs', 'position_obs')
-nreal = (1000, 1000)
+nreal = (100, 100)
 
 fig, ax = plt.subplots(4, 2, figsize=(12, 12))
 for j in range(2):
-    for l in range(len(Csprd)):
+    for l in range(len(Lsprd)):
         for c in range(len(cases)):
             rmse = np.zeros((nreal[j], 4))
             r1 = 0
             for r in range(nreal[j]):
-                #     expname = 'single_wind_obs'
-                #     Yloc = np.load('output/'+expname+'/{:04d}/Yloc.npy'.format(r+1))
-                #     obsR = np.sqrt((Yloc[0, 0]-0.5*ni)**2 + (Yloc[1, 0]-0.5*nj)**2)
-                #     if obsR<0 or obsR>10: ##check obs radius, only for
-                #         continue
-                rmse[r1, 0] = np.mean(np.load('output/'+expname[j]+'/{:04d}/Lbias0/Lsprd{}/N{}/{}.npy'.format(r+1, Csprd[l], nens, cases[c]))[nens, 0])
-                rmse[r1, 1] = np.mean(np.load('output/'+expname[j]+'/{:04d}/Lbias0/Lsprd{}/N{}/{}.npy'.format(r+1, Csprd[l], nens, cases[c]))[0:nens, 1])*9
-                rmse[r1, 2] = np.mean(np.load('output/'+expname[j]+'/{:04d}/Lbias0/Lsprd{}/N{}/{}.npy'.format(r+1, Csprd[l], nens, cases[c]))[0:nens, 2])
-                rmse[r1, 3] = np.mean(np.load('output/'+expname[j]+'/{:04d}/Lbias0/Lsprd{}/N{}/{}.npy'.format(r+1, Csprd[l], nens, cases[c]))[0:nens, 3])*9
+                rmse[r1, 0] = np.mean(np.load('output/'+expname[j]+'/{:04d}/Lbias{}/Lsprd{}/N{}/{}.npy'.format(r+1, Lbias, Lsprd[l], nens, cases[c]))[nens, 0])
+                rmse[r1, 1] = np.mean(np.load('output/'+expname[j]+'/{:04d}/Lbias{}/Lsprd{}/N{}/{}.npy'.format(r+1, Lbias, Lsprd[l], nens, cases[c]))[0:nens, 1])*9
+                rmse[r1, 2] = np.mean(np.load('output/'+expname[j]+'/{:04d}/Lbias{}/Lsprd{}/N{}/{}.npy'.format(r+1, Lbias, Lsprd[l], nens, cases[c]))[0:nens, 2])
+                rmse[r1, 3] = np.mean(np.load('output/'+expname[j]+'/{:04d}/Lbias{}/Lsprd{}/N{}/{}.npy'.format(r+1, Lbias, Lsprd[l], nens, cases[c]))[0:nens, 3])*9
                 r1 += 1
             for i in range(4):
                 x = l + c*0.1 + 0.1
@@ -41,7 +37,7 @@ ymax = (1.8, 45, 6, 18)
 for j in range(2):
     for i in range(4):
         ax[i, j].grid()
-        ax[i, j].set_xlim([0, len(Csprd)])
+        ax[i, j].set_xlim([0, len(Lsprd)])
         ax[i, j].set_ylim([0, ymax[i]])
         ax[i, j].set_xticklabels([])
         ax[i, j].set_axisbelow(True)
