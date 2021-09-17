@@ -153,6 +153,7 @@ def local_GC(dist, cutoff, dampen):
         loc[ind2] = loc2[ind2]
     else:
         loc = np.ones(dist.shape)
+    loc = loc*dampen
     return loc
 
 
