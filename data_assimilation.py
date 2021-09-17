@@ -286,7 +286,10 @@ def diagnose(X, Xt):
     out[nens, 3] = np.sqrt(np.mean((vortex_size(Xmean) - true_size)**2))
     return out
 
-def sprd(Xens):
+def mean_rmse(Xens, Xt):
+    return np.sqrt(np.mean((np.mean(Xens, axis=3) - Xt)**2, axis=(0,1,2)))
+
+def ens_sprd(Xens):
     return np.sqrt(np.mean(np.std(Xens, axis=3)**2, axis=(0,1,2)))
 
 def sawtooth(out_b, out_a):
