@@ -52,13 +52,13 @@ for loc_sprd in (1, 2, 3, 4, 5):
             ##Run filter with MSA:
             for ns in (1, 2, 3, 4, 5, 6, 7):
                 if not os.path.isfile(outdir+dirname+scenario+'/EnSRF_s{}.npy'.format(ns)):
-                    Xa = filter_update(Xb, Yo, Ymask, Yloc, 'EnSRF', obs_err_std*np.ones(ns), 0.0*np.ones(ns), get_krange(ns), (1,), run_alignment=True)
+                    Xa = filter_update(Xb, Yo, Ymask, Yloc, 'EnSRF', obs_err_std*np.ones(ns), np.zeros(ns), np.ones(ns), get_krange(ns), (1,), run_alignment=True)
                     err = diagnose(Xa, Xt)
                     np.save(outdir+dirname+scenario+'/EnSRF_s{}.npy'.format(ns), err)
 
             ##particle filter solution
             if not os.path.isfile(outdir+dirname+scenario+'/PF.npy'):
-                Xa = filter_update(Xb, Yo, Ymask, Yloc, 'PF', obs_err_std*np.ones(1), 0.0*np.ones(1), get_krange(1), (1,), run_alignment=False)
+                Xa = filter_update(Xb, Yo, Ymask, Yloc, 'PF', obs_err_std*np.ones(1), np.zeros(1), np.ones(1), get_krange(1), (1,), run_alignment=False)
                 err = diagnose(Xa, Xt)
                 np.save(outdir+dirname+scenario+'/PF.npy', err)
 

@@ -5,7 +5,7 @@ from multiscale import *
 
 
 ##top-level wrapper for update at one analysis cycle:
-def filter_update(Xb, Yo, Ymask, Yloc, filter_kind, obs_err_std, local_cutoff,
+def filter_update(Xb, Yo, Ymask, Yloc, filter_kind, obs_err_std, local_cutoff, local_dampen,
                   krange, krange_obs, run_alignment, print_out=False, update_scale=-1):
     X = Xb.copy()
     ni, nj, nv, nens = Xb.shape
@@ -38,7 +38,7 @@ def filter_update(Xb, Yo, Ymask, Yloc, filter_kind, obs_err_std, local_cutoff,
 
             if filter_kind=='EnSRF':
                 Xas = EnSRF(Xas, Xloc, Ybs[0:nobs1], Yos[0:nobs1], Ymask[0:nobs1], Yloc[:, 0:nobs1],
-                            obs_err_std[s]*obs_err_scale, local_cutoff[s], print_out)
+                            obs_err_std[s]*obs_err_scale, local_cutoff[s], local_dampen[s], print_out)
             if filter_kind=='PF':
                 Xas = PF(Xas, Xloc, Ybs[0:nobs1], Yos[0:nobs1], Ymask[0:nobs1], Yloc[:, 0:nobs1], obs_err_std[s]*obs_err_scale)
 
@@ -55,7 +55,7 @@ def filter_update(Xb, Yo, Ymask, Yloc, filter_kind, obs_err_std, local_cutoff,
     return X
 
 ##EnSRF filter update:
-def EnSRF(Xb, Xloc, Yb, Yo, Ymask, Yloc, obs_err_std, local_cutoff, print_out):
+def EnSRF(Xb, Xloc, Yb, Yo, Ymask, Yloc, obs_err_std, local_cutoff, local_dampen, print_out):
     ni, nj, nv, nens = Xb.shape
     nobs = Yo.size
     X = Xb.copy()
@@ -80,7 +80,7 @@ def EnSRF(Xb, Xloc, Yb, Yo, Ymask, Yloc, obs_err_std, local_cutoff, print_out):
             if varb>0 and np.abs(innov)!=0:
                 ##localization
                 dist = get_dist(ni, nj, Xloc[0, :, :, :], Xloc[1, :, :, :], Yloc[0, p], Yloc[1, p])
-                C = local_GC(dist, local_cutoff)
+                C = local_GC(dist, local_cutoff, local_dampen)
                 ##Kalman gain
                 gain = C * np.sum(Xp * np.tile(ybp, (ni, nj, nv, 1)), axis=3) / (nens - 1) / (varo + varb)
                 ##update mean and perturbations
@@ -91,7 +91,7 @@ def EnSRF(Xb, Xloc, Yb, Yo, Ymask, Yloc, obs_err_std, local_cutoff, print_out):
 
                 ##update observation priors
                 dist1 = get_dist(ni, nj, Yloc[0, :], Yloc[1, :], Yloc[0, p], Yloc[1, p])
-                C1 = local_GC(dist1, local_cutoff)
+                C1 = local_GC(dist1, local_cutoff, local_dampen)
                 gain1 = C1 * np.sum(Yp * np.tile(ybp, (nobs, 1)), axis=1) / (nens - 1) / (varo + varb)
                 Ym = Ym + gain1 * innov
                 for m in range(nens):
@@ -140,7 +140,7 @@ def get_dist(ni, nj, ii, jj, io, jo):
     dist = np.sqrt(np.minimum(np.abs(ii-io),ni-np.abs(ii-io))**2+np.minimum(np.abs(jj-jo),nj-np.abs(jj-jo))**2)
     return dist
 
-def local_GC(dist, cutoff):
+def local_GC(dist, cutoff, dampen):
     loc = np.zeros(dist.shape)
     if cutoff>0:
         r = dist / (cutoff / 2)

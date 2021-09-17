@@ -51,7 +51,7 @@ for p in range(nv+1):
         Y[c, p, :, m] = obs_interp2d(X[:, :, :, m], Yloc)
         Yout[c, p, m] = obs_interp2d(X[:, :, :, m], Yloc_out)
     if p<nv:
-        X = filter_update(X, Yo[p:p+1], Ymask[p:p+1], Yloc[:, p:p+1], 'EnSRF', (obs_err,), (0,), (16,), (1,), False)
+        X = filter_update(X, Yo[p:p+1], Ymask[p:p+1], Yloc[:, p:p+1], 'EnSRF', (obs_err,), (0,), (1,), (16,), (1,), False)
 
 c = 1  ##MSA EnSRF, save after each scale iteration
 ns = 5
@@ -62,7 +62,7 @@ for s in range(ns+1):
         Y[c, s, :, m] = obs_interp2d(X[:, :, :, m], Yloc)
         Yout[c, s, m] = obs_interp2d(X[:, :, :, m], Yloc_out)
     if s<ns:
-        X = filter_update(X, Yo, Ymask, Yloc, 'EnSRF', obs_err*np.ones(ns), np.zeros(ns), krange, (1,), True, update_scale=s)
+        X = filter_update(X, Yo, Ymask, Yloc, 'EnSRF', obs_err*np.ones(ns), np.zeros(ns), np.ones(ns), krange, (1,), True, update_scale=s)
 
 c = 2 ##PF solution, just one step
 X = Xb.copy()
@@ -71,7 +71,7 @@ for j in range(2):
         Y[c, j, :, m] = obs_interp2d(X[:, :, :, m], Yloc)
         Yout[c, j, m] = obs_interp2d(X[:, :, :, m], Yloc_out)
     if j<1:
-        X = filter_update(X, Yo, Ymask, Yloc, 'PF', (obs_err,), (0,), (16,), (1,), False)
+        X = filter_update(X, Yo, Ymask, Yloc, 'PF', (obs_err,), (0,), (1,), (16,), (1,), False)
 
 ##plot
 plt.switch_backend('Agg')

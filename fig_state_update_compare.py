@@ -52,7 +52,7 @@ X = np.zeros((ni, nj, nv, nens, nc))
 for c in range(nc):
     print(filter_kind[c], 'ns={}'.format(ns[c]))
     X[:, :, :, :, c] = filter_update(Xb, Yo, Ymask, Yloc, filter_kind[c],
-                                     obs_err*np.ones(ns[c]), np.zeros(ns[c]),
+                                     obs_err*np.ones(ns[c]), np.zeros(ns[c]), np.ones(ns[c]),
                                      get_krange(ns[c]), (1,), run_alignment=True)
 
 plt.switch_backend('Agg')
@@ -85,4 +85,4 @@ for c in range(nc):
         metric[m] = vortex_intensity(X[:, :, :, m, c])
     print(c, np.mean(metric))
 
-plt.savefig('1.pdf')
+plt.savefig('out.pdf')
