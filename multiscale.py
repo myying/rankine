@@ -19,14 +19,9 @@ def get_clev(wn):
     return lev
 
 def get_nobs_thin(wn, ni, nj, nobs):
-    oclev = np.sqrt(ni*nj/nobs)
     clev = get_clev(wn)
-    if clev<oclev:
-        # print("this scale is not resolved by obs")
-        thin = 1
-    else:
-        thin = 2**(2*(clev - oclev))
-    return int(nobs/thin)
+    nobs1 = np.minimum(nobs, ni*nj/(2**(clev-1)))
+    return nobs1
 
 ##scale decomposition
 def lowpass_resp(Kh, k1, k2):

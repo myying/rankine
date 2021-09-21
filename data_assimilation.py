@@ -6,17 +6,24 @@ from multiscale import *
 
 ##top-level wrapper for update at one analysis cycle:
 def filter_update(Xb, Yo, Ymask, Yloc, filter_kind, obs_err_std, local_cutoff, local_dampen,
-                  krange, krange_obs, run_alignment, print_out=False, update_scale=-1):
+                  krange, krange_obs, run_alignment, print_out=False, update_scale=-1, obs_scale=-1):
     X = Xb.copy()
     ni, nj, nv, nens = Xb.shape
     nobs = Yo.size
     ns = len(krange)
     ns_obs = len(krange_obs)
 
+    ###some switch for runing tests only using one scale component
     if update_scale==-1:
         ss = range(ns)
     else:
         ss = (update_scale,)
+    if obs_scale==-1:
+        oss = range(ns_obs)
+    else:
+        oss = (obs_scale,)
+
+    ###loop over state scale components
     for s in ss:
         ##get scale component for prior state
         clev = int(get_clev(krange[s]))
@@ -24,7 +31,8 @@ def filter_update(Xb, Yo, Ymask, Yloc, filter_kind, obs_err_std, local_cutoff, l
         Xloc = get_loc(ni, nj, nv, clev)
 
         Xas = Xbs.copy()
-        for r in range(ns_obs):
+        ###loop over obs scale components
+        for r in oss:
             ##get scale component for obs
             Yos = obs_get_scale(ni, nj, nv, Yo, Ymask, Yloc, krange_obs, r)
             ##get scale component for obs prior
