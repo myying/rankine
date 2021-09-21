@@ -10,9 +10,11 @@ from config import *
 realize = int(sys.argv[1])
 
 network_type = 1
-loc_sprd = 3
-ns = 3
+loc_sprd = int(sys.argv[2])
+ns = int(sys.argv[3])
 update_s = 0
+local_cutoff_try = (8, 12, 16, 20, 24, 28, 32, 40, 48, 64)
+local_dampen_try = (0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1)
 
 np.random.seed(realize)
 dirname = 'localization_tuning/{:04d}/type{}'.format(realize, network_type)
@@ -20,7 +22,7 @@ if not os.path.exists(outdir+dirname):
     os.makedirs(outdir+dirname)
 
 ##truth
-Xt = gen_vortex(ni, nj, nv, Vmax, Rmw)
+Xt = gen_random_flow(ni, nj, nv, dx, Vbg, -3) + gen_vortex(ni, nj, nv, Vmax, Rmw)
 
 ##Observations
 if os.path.isfile(outdir+dirname+'/Yo.npy'):
@@ -29,10 +31,10 @@ if os.path.isfile(outdir+dirname+'/Yo.npy'):
     Ymask = np.load(outdir+dirname+'/Ymask.npy')
 else:
     if network_type==1:  ##global network
-        nobs = 4000
+        nobs = 1000
         obs_range = 200
     if network_type==2:  ##targeted network
-        nobs = 16000
+        nobs = 6000
         obs_range = 30
     Yo = np.zeros((nobs*nv))
     Ymask = np.zeros((nobs*nv))
@@ -57,11 +59,10 @@ if not os.path.exists(outdir+dirname+scenario):
 ##Prior ensemble
 Xb = np.zeros((ni, nj, nv, nens))
 for m in range(nens):
-    Xb[:, :, :, m] = gen_vortex(ni, nj, nv, Vmax, Rmw, loc_sprd)
+    Xb[:, :, :, m] = gen_random_flow(ni, nj, nv, dx, Vbg, -3) + gen_vortex(ni, nj, nv, Vmax, Rmw, loc_sprd)
 
-local_cutoff_try = (8, 16, 24, 32, 48, 64, 128)
-local_dampen_try = (0.1, 0.3, 0.5, 0.7, 0.8, 0.9, 1)
 rmse = np.zeros((len(local_cutoff_try), len(local_dampen_try)))
+rmse[:, :] = np.nan
 sprd = np.zeros((len(local_cutoff_try), len(local_dampen_try)))
 for i in range(len(local_cutoff_try)):
     for j in range(len(local_dampen_try)):
