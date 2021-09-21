@@ -15,7 +15,7 @@ jj = j0.T
 ###plot detailed contours for each case separately
 loc_sprd = 3
 ns = (2, 3, 4, 5, 6, 7)
-colors = [plt.cm.gist_rainbow(x) for x in np.linspace(0, 1, len(ns))]
+colors = ([.9,0,0], [.9,.9,0], [.3,.7,.3], [0,.9,.9], [0,0,.9], [.9,.6,.9])
 
 plt.figure(figsize=(5,4))
 ax = plt.subplot(111)
@@ -23,17 +23,18 @@ for k in range(len(ns)):
     rmse = np.zeros((len(local_cutoff_try), len(local_dampen_try), nrealize))
     for realize in range(nrealize):
         dirname = 'localization_tuning/{:04d}/type{}'.format(realize+1, network_type)
-        scenario = '/Lsprd{}/ns{}_u{}'.format(loc_sprd, ns[k], update_s)
+        # scenario = '/Lsprd{}/ns{}_u{}'.format(loc_sprd, ns[k], update_s)  ##panel a
+        scenario = '/Lsprd{}/ns{}_u{}_mso'.format(loc_sprd, ns[k], update_s)  ##panel b
         rmse[:, :, realize] = np.load(outdir+dirname+scenario+'/rmse.npy')
-    mean_rmse = np.median(rmse, axis=2)
-    best_i = ii[np.where(mean_rmse==np.min(mean_rmse))]
+    mean_rmse = np.mean(rmse, axis=2)
+    best_i = ii[np.where(mean_rmse==np.min(mean_rmse))]+np.random.uniform(-.5,.5)
     best_j = jj[np.where(mean_rmse==np.min(mean_rmse))]
     rmse_contour = np.min(mean_rmse) + (np.max(mean_rmse) - np.min(mean_rmse))*0.01
-    ax.contour(ii, jj, mean_rmse, (rmse_contour,), colors=[colors[k][0:3]], linewidths=3)
-    ax.plot(best_i, best_j, color=colors[k][0:3], marker='*', markersize=8, label='Ns={}'.format(ns[k]))
+    ax.contour(ii, jj, mean_rmse, (rmse_contour,), colors=[colors[k]], linewidths=3)
+    ax.plot(best_i, best_j, color=colors[k], marker='*', markersize=10, label='Ns={}'.format(ns[k]))
 ax.set_xticks(local_cutoff_try)
 ax.set_xlim([5, 50])
-ax.set_ylim([0.1, 1.05])
+ax.set_ylim([0.2, 1.0])
 ax.grid()
 ax.legend()
 

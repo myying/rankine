@@ -29,7 +29,7 @@ ppn=$SLURM_NTASKS_PER_NODE
 
 ###localization tuning runs
 t=0
-for real in `seq 81 200`; do
+for real in `seq 51 100`; do
     for loc_sprd in 3; do
         for ns in 2 3 4 5 6 7; do
             offset_node=`echo $t / $ppn |bc`
