@@ -21,7 +21,7 @@ def get_clev(wn):
 def get_nobs_thin(wn, ni, nj, nobs):
     clev = get_clev(wn)
     nobs1 = np.minimum(nobs, ni*nj/(2**(clev-1)))
-    return nobs1
+    return int(nobs1)
 
 ##scale decomposition
 def lowpass_resp(Kh, k1, k2):
