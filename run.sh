@@ -28,19 +28,35 @@ ppn=$SLURM_NTASKS_PER_NODE
 #done
 
 ###localization tuning runs
+#t=0
+#for real in `seq 51 100`; do
+#    for loc_sprd in 3; do
+#        for ns in 2 3 4 5 6 7; do
+#            offset_node=`echo $t / $ppn |bc`
+#            echo $real $loc_sprd $ns
+#            srun -N 1 -n 1 -r $offset_node python run_localization_tuning.py $real $loc_sprd $ns &
+#            t=$((t+1))
+#            if [ $t == $nt ]; then
+#                t=0
+#                wait
+#            fi
+#        done
+#    done
+#done
+
+###full network assimilation exps
 t=0
-for real in `seq 51 100`; do
+for real in `seq 1 128`; do
     for loc_sprd in 3; do
-        for ns in 2 3 4 5 6 7; do
-            offset_node=`echo $t / $ppn |bc`
-            echo $real $loc_sprd $ns
-            srun -N 1 -n 1 -r $offset_node python run_localization_tuning.py $real $loc_sprd $ns &
-            t=$((t+1))
-            if [ $t == $nt ]; then
-                t=0
-                wait
-            fi
-        done
+        for ns in 6; do
+        offset_node=`echo $t / $ppn |bc`
+        echo $real $loc_sprd
+        srun -N 1 -n 1 -r $offset_node python run_full_network.py $real $loc_sprd $ns &
+        t=$((t+1))
+        if [ $t == $nt ]; then
+            t=0
+            wait
+        fi
     done
 done
 
