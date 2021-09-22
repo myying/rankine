@@ -283,7 +283,7 @@ def diagnose(X, Xt):
     true_intensity = vortex_intensity(Xt)
     true_size = vortex_size(Xt)
     for m in range(nens):
-        out[m, 0] = np.sqrt(np.mean((X[:, :, :, m] - Xt)**2, axis=(0,1,2))) ###domain-averaged (near storm region) state (u,v) outor
+        out[m, 0] = np.sqrt(np.mean((X[:, :, :, m] - Xt)**2, axis=(0,1,2))) ###domain-averaged state (u,v) outor
         out[m, 1] = np.sqrt(np.mean((vortex_center(X[:, :, :, m]) - true_center)**2))
         out[m, 2] = np.sqrt(np.mean((vortex_intensity(X[:, :, :, m]) - true_intensity)**2))
         out[m, 3] = np.sqrt(np.mean((vortex_size(X[:, :, :, m]) - true_size)**2))
