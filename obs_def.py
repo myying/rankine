@@ -1,6 +1,15 @@
 import numpy as np
 
 ###observation network
+def gen_network(network_type):
+    if network_type==1:  ##global network
+        nobs = 1000
+        obs_range = 200
+    if network_type==2:  ##targeted network
+        nobs = 6000
+        obs_range = 30
+    return nobs, obs_range
+
 def gen_obs_loc(ni, nj, nv, nobs):
     Yloc2 = np.zeros((2, nobs))
     Yloc2[0, :] = np.random.uniform(0, ni, nobs)

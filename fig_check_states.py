@@ -24,12 +24,7 @@ np.random.seed(realize)
 Xt = gen_random_flow(ni, nj, nv, dx, Vbg, -3) + gen_vortex(ni, nj, nv, Vmax, Rmw)
 
 ##Observations
-if network_type==1:  ##global network
-    nobs = 1000
-    obs_range = 200
-if network_type==2:  ##targeted network
-    nobs = 6000
-    obs_range = 30
+nobs, obs_range = gen_network(network_type)
 Yo = np.zeros((nobs*nv))
 Ymask = np.zeros((nobs*nv))
 Yloc = np.zeros((3, nobs*nv))

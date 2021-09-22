@@ -30,12 +30,7 @@ if os.path.isfile(outdir+dirname+'/Yo.npy'):
     Yloc = np.load(outdir+dirname+'/Yloc.npy')
     Ymask = np.load(outdir+dirname+'/Ymask.npy')
 else:
-    if network_type==1:  ##global network
-        nobs = 1000
-        obs_range = 200
-    if network_type==2:  ##targeted network
-        nobs = 6000
-        obs_range = 30
+    nobs, obs_range = gen_network(network_type)
     Yo = np.zeros((nobs*nv))
     Ymask = np.zeros((nobs*nv))
     Yloc = np.zeros((3, nobs*nv))
