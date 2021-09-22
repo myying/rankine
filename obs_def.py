@@ -3,8 +3,8 @@ import numpy as np
 ###observation network
 def gen_network(network_type):
     if network_type==1:  ##global network
-        nobs = 1000
-        obs_range = 200
+        nobs = 500
+        obs_range = 100
     if network_type==2:  ##targeted network
         nobs = 6000
         obs_range = 30

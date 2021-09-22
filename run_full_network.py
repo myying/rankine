@@ -26,11 +26,13 @@ if not os.path.exists(outdir+dirname):
 ###truth and observation
 if os.path.isfile(outdir+dirname+'/Xt.npy'):
     Xt = np.load(outdir+dirname+'/Xt.npy')
+    bkg_flow = np.load(outdir+dirname+'/bkg_flow.npy')
     Yo = np.load(outdir+dirname+'/Yo.npy')
     Yloc = np.load(outdir+dirname+'/Yloc.npy')
     Ymask = np.load(outdir+dirname+'/Ymask.npy')
 else:
-    Xt = gen_random_flow(ni, nj, nv, dx, Vbg, -3) + gen_vortex(ni, nj, nv, Vmax, Rmw)
+    bkg_flow = gen_random_flow(ni, nj, nv, dx, Vbg, -3)
+    Xt = bkg_flow + gen_vortex(ni, nj, nv, Vmax, Rmw)
     true_center = vortex_center(Xt)
     Yo = np.zeros((nobs*nv))
     Ymask = np.zeros((nobs*nv))
@@ -44,6 +46,7 @@ else:
     Ymask[np.where(Ydist<=obs_range)] = 1
     Yo[np.where(Ymask==0)] = 0.0
     np.save(outdir+dirname+'/Xt.npy', Xt)
+    np.save(outdir+dirname+'/bkg_flow.npy', bkg_flow)
     np.save(outdir+dirname+'/Yo.npy', Yo)
     np.save(outdir+dirname+'/Yloc.npy', Yloc)
     np.save(outdir+dirname+'/Ymask.npy', Ymask)
@@ -55,7 +58,7 @@ if not os.path.exists(outdir+dirname+scenario):
 ##Prior ensemble
 Xb = np.zeros((ni, nj, nv, nens))
 for m in range(nens):
-    Xb[:, :, :, m] = gen_random_flow(ni, nj, nv, dx, Vbg, -3) + gen_vortex(ni, nj, nv, Vmax, Rmw, loc_sprd, loc_bias)
+    Xb[:, :, :, m] = bkg_flow + gen_random_flow(ni, nj, nv, dx, 0.2*Vbg, -3) + gen_vortex(ni, nj, nv, Vmax, Rmw, loc_sprd, loc_bias)
 if not os.path.isfile(outdir+dirname+scenario+'/NoDA.npy'):
     err = diagnose(Xb, Xt)
     np.save(outdir+dirname+scenario+'/NoDA.npy', err)
