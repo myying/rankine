@@ -96,5 +96,35 @@ def get_obs_err_scale(ni, nj, nv, nobs, krange, s):
     return obs_err_scale
 
 def get_local_cutoff(ns):
-    local_cutoff = np.ones(ns)
+    if ns==1:
+        local_cutoff = (16,)
+    if ns==2:
+        local_cutoff = (16, 8)
+    if ns==3:
+        local_cutoff = (18, 12, 8)
+    if ns==4:
+        local_cutoff = (20, 16, 12, 8)
+    if ns==5:
+        local_cutoff = (22, 20, 16, 12, 8)
+    if ns==6:
+        local_cutoff = (24, 22, 20, 16, 12, 8)
+    if ns==7:
+        local_cutoff = (26, 22, 20, 18, 16, 12, 8)
     return local_cutoff
+
+def get_local_dampen(ns):
+    if ns==1:
+        local_dampen = (1.0,)
+    if ns==2:
+        local_dampen = (0.8, 0.9)
+    if ns==3:
+        local_dampen = (0.7, 0.7, 0.8)
+    if ns==4:
+        local_dampen = (0.5, 0.5, 0.7, 0.8)
+    if ns==5:
+        local_dampen = (0.4, 0.4, 0.6, 0.7, 0.8)
+    if ns==6:
+        local_dampen = (0.4, 0.4, 0.5, 0.7, 0.8, 0.8)
+    if ns==7:
+        local_dampen = (0.3, 0.3, 0.4, 0.5, 0.7, 0.8, 0.8)
+    return local_dampen
