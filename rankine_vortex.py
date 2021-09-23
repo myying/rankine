@@ -175,7 +175,7 @@ def vortex_size(X):
     wind = np.sqrt(X[:, :, 0]**2 + X[:, :, 1]**2)
     ni, nj = wind.shape
     nr = 30
-    wind_min = 25  ##15 for no bg flow cases!
+    wind_min = 15  ##15 for no bg flow cases!
     wind_rad = np.zeros(nr)
     count_rad = np.zeros(nr)
     for i in range(-nr, nr+1):

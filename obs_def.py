@@ -6,7 +6,7 @@ def gen_network(network_type):
         nobs = 500
         obs_range = 100
     if network_type==2:  ##targeted network
-        nobs = 6000
+        nobs = 2000
         obs_range = 30
     return nobs, obs_range
 
@@ -49,7 +49,7 @@ def plot_obs(ax, ni, nj, nv, Y, Ymask, Yloc):
     cmap = [plt.cm.bwr(x) for x in np.linspace(0, 1, round(obsmax-obsmin)+1)]
     subset = np.where(np.logical_and(Yloc[2, :]==0, Ymask==1))
     color_ind = np.maximum(np.minimum(np.round(Y[subset]-obsmin), int(round(obsmax-obsmin))), 0).astype(int)
-    ax.scatter(Yloc[0, subset], Yloc[1, subset], s=30, color=np.array(cmap)[color_ind, 0:3])
+    ax.scatter(Yloc[0, subset], Yloc[1, subset], s=10, color=np.array(cmap)[color_ind, 0:3])
     ax.set_xlim([0, ni])
     ax.set_ylim([0, nj])
     return

@@ -14,7 +14,7 @@ gen = 5e-5
 diss = 3e3
 
 ### vortex parameters
-Vbg = 10      ##background flow amplitude
+Vbg = 5      ##background flow amplitude
 Vmax = 35     ## maximum wind speed (vortex intensity)
 Rmw = 5       ## radius of maximum wind (vortex size)
 
