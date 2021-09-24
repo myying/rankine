@@ -13,8 +13,8 @@ realize = int(sys.argv[1])
 nens = 20 # ensemble size
 loc_bias = 0
 loc_sprd = int(sys.argv[2])
-bkg_phase_err = sys.argv[3]
-bkg_amp_err = sys.argv[4]
+bkg_phase_err = float(sys.argv[3])
+bkg_amp_err = float(sys.argv[4])
 ns = int(sys.argv[5])
 
 network_type = 1
