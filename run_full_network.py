@@ -16,7 +16,7 @@ loc_sprd = int(sys.argv[2])
 bkg_phase_err = float(sys.argv[3])
 bkg_amp_err = float(sys.argv[4])
 
-network_type = 1
+network_type = 1 
 nobs, obs_range = gen_network(network_type)
 
 np.random.seed(realize)
@@ -87,9 +87,10 @@ for ns in (1, 2, 3, 4, 5, 6, 7):
         err = diagnose(Xa, Xt)
         np.save(outdir+dirname+scenario+'/EnSRF_s{}.npy'.format(ns), err)
 
-    ##with mso krange_obs=get_krange(ns)
-    # if ns>1 and not os.path.isfile(outdir+dirname+scenario+'/EnSRF_s{}_mso.npy'.format(ns)):
-    #     Xa = filter_update(Xb, Yo, Ymask, Yloc, 'EnSRF', obs_err_std*np.ones(ns),
-    #                         get_local_cutoff(ns), get_local_dampen(ns), get_krange(ns), get_krange(ns), run_alignment=True)
-    #     err = diagnose(Xa, Xt)
-    #     np.save(outdir+dirname+scenario+'/EnSRF_s{}_mso.npy'.format(ns), err)
+##add mso cases
+# for ns in (2, 3, 4):
+#     if not os.path.isfile(outdir+dirname+scenario+'/EnSRF_s{}_mso.npy'.format(ns)):
+#         Xa = filter_update(Xb, Yo, Ymask, Yloc, 'EnSRF', obs_err_std*np.ones(ns),
+#                             get_local_cutoff(ns), get_local_dampen(ns), get_krange(ns), get_krange(ns), run_alignment=True)
+#         err = diagnose(Xa, Xt)
+#         np.save(outdir+dirname+scenario+'/EnSRF_s{}_mso.npy'.format(ns), err)
