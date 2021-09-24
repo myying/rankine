@@ -10,20 +10,22 @@ from config import *
 
 realize = 1 #int(sys.argv[1])
 
-Vbg = 0
+bkg_amp_err = 1.0
+bkg_phase_err = 0.0
+loc_sprd = 5
+
 nobs = 500
 obs_range = 100
-loc_sprd = 5 #int(sys.argv[1])
-Vbg_err = 0
 ns = int(sys.argv[1])
 krange = get_krange(ns)
-krange_obs = get_krange(ns)
+krange_obs = get_krange(1)
 
 np.random.seed(realize)
 bkg_flow = gen_random_flow(ni, nj, nv, dx, Vbg, -3)
+vortex = gen_vortex(ni, nj, nv, Vmax, Rmw)
 
 ##truth
-Xt = bkg_flow + gen_vortex(ni, nj, nv, Vmax, Rmw)
+Xt = bkg_flow + vortex
 
 ##Observations
 Yo = np.zeros((nobs*nv))
@@ -39,16 +41,20 @@ Ymask[np.where(Ydist<=obs_range)] = 1
 Yo[np.where(Ymask==0)] = 0.0
 
 ##Prior ensemble
-Xb = np.zeros((ni, nj, nv, nens))
+bkg_flow_ens = np.zeros((ni, nj, nv, nens))
+vortex_ens = np.zeros((ni, nj, nv, nens))
 u = np.zeros((ni, nj, nv, nens))
 v = np.zeros((ni, nj, nv, nens))
 for m in range(nens):
     u[:, :, :, m] = np.random.normal(0, loc_sprd)
     v[:, :, :, m] = np.random.normal(0, loc_sprd)
-    Xb[:, :, :, m] = Xt
-Xb = warp(Xb, -u, -v)
+    vortex_ens[:, :, :, m] = vortex
+    bkg_flow_ens[:, :, :, m] = bkg_flow
+vortex_ens = warp(vortex_ens, -u, -v)
+bkg_flow_ens = warp(bkg_flow_ens, -u*bkg_phase_err, -v*bkg_phase_err)
 for m in range(nens):
-    Xb[:, :, :, m] += gen_random_flow(ni, nj, nv, dx, Vbg_err, -3)
+    bkg_flow_ens[:, :, :, m] += gen_random_flow(ni, nj, nv, dx, 0.6*Vbg*bkg_amp_err, -3)
+Xb = bkg_flow_ens + vortex_ens
 
 X = Xb.copy()
 X = filter_update(X, Yo, Ymask, Yloc, 'EnSRF', obs_err_std*np.ones(ns), get_local_cutoff(ns), get_local_dampen(ns), krange, krange_obs, run_alignment=True, update_scale=-1)

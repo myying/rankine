@@ -13,7 +13,9 @@ realize = int(sys.argv[1])
 nens = 20 # ensemble size
 loc_bias = 0
 loc_sprd = int(sys.argv[2])
-ns = int(sys.argv[3])
+bkg_phase_err = sys.argv[3]
+bkg_amp_err = sys.argv[4]
+ns = int(sys.argv[5])
 
 network_type = 1
 nobs, obs_range = gen_network(network_type)
@@ -25,14 +27,16 @@ if not os.path.exists(outdir+dirname):
 
 ###truth and observation
 if os.path.isfile(outdir+dirname+'/Xt.npy'):
-    Xt = np.load(outdir+dirname+'/Xt.npy')
     bkg_flow = np.load(outdir+dirname+'/bkg_flow.npy')
+    vortex = np.load(outdir+dirname+'/vortex.npy')
+    Xt = np.load(outdir+dirname+'/Xt.npy')
     Yo = np.load(outdir+dirname+'/Yo.npy')
     Yloc = np.load(outdir+dirname+'/Yloc.npy')
     Ymask = np.load(outdir+dirname+'/Ymask.npy')
 else:
     bkg_flow = gen_random_flow(ni, nj, nv, dx, Vbg, -3)
-    Xt = bkg_flow + gen_vortex(ni, nj, nv, Vmax, Rmw)
+    vortex = gen_vortex(ni, nj, nv, Vmax, Rmw)
+    Xt = bkg_flow + vortex
     true_center = vortex_center(Xt)
     Yo = np.zeros((nobs*nv))
     Ymask = np.zeros((nobs*nv))
@@ -47,18 +51,31 @@ else:
     Yo[np.where(Ymask==0)] = 0.0
     np.save(outdir+dirname+'/Xt.npy', Xt)
     np.save(outdir+dirname+'/bkg_flow.npy', bkg_flow)
+    np.save(outdir+dirname+'/vortex.npy', vortex)
     np.save(outdir+dirname+'/Yo.npy', Yo)
     np.save(outdir+dirname+'/Yloc.npy', Yloc)
     np.save(outdir+dirname+'/Ymask.npy', Ymask)
 
-scenario = "/Lbias{}/Lsprd{}/N{}".format(loc_bias, loc_sprd, nens)
+scenario = "/Lbias{}/Lsprd{}/phase{}_amp{}/N{}".format(loc_bias, loc_sprd, bkg_phase_err, bkg_amp_err, nens)
 if not os.path.exists(outdir+dirname+scenario):
     os.makedirs(outdir+dirname+scenario)
 
 ##Prior ensemble
-Xb = np.zeros((ni, nj, nv, nens))
+bkg_flow_ens = np.zeros((ni, nj, nv, nens))
+vortex_ens = np.zeros((ni, nj, nv, nens))
+u = np.zeros((ni, nj, nv, nens))
+v = np.zeros((ni, nj, nv, nens))
 for m in range(nens):
-    Xb[:, :, :, m] = bkg_flow + gen_random_flow(ni, nj, nv, dx, 0.2*Vbg, -3) + gen_vortex(ni, nj, nv, Vmax, Rmw, loc_sprd, loc_bias)
+    u[:, :, :, m] = np.random.normal(0, loc_sprd)
+    v[:, :, :, m] = np.random.normal(0, loc_sprd)
+    vortex_ens[:, :, :, m] = vortex
+    bkg_flow_ens[:, :, :, m] = bkg_flow
+vortex_ens = warp(vortex_ens, -u, -v)
+bkg_flow_ens = warp(bkg_flow_ens, -u*bkg_phase_err, -v*bkg_phase_err)
+for m in range(nens):
+    bkg_flow_ens[:, :, :, m] += gen_random_flow(ni, nj, nv, dx, 0.6*Vbg*bkg_amp_err, -3)
+Xb = bkg_flow_ens + vortex_ens
+
 if not os.path.isfile(outdir+dirname+scenario+'/NoDA.npy'):
     err = diagnose(Xb, Xt)
     np.save(outdir+dirname+scenario+'/NoDA.npy', err)
@@ -69,9 +86,10 @@ if not os.path.isfile(outdir+dirname+scenario+'/EnSRF_s{}.npy'.format(ns)):
                         get_local_cutoff(ns), get_local_dampen(ns), get_krange(ns), get_krange(1), run_alignment=True)
     err = diagnose(Xa, Xt)
     np.save(outdir+dirname+scenario+'/EnSRF_s{}.npy'.format(ns), err)
-##mso
-if ns>1 and not os.path.isfile(outdir+dirname+scenario+'/EnSRF_s{}_mso.npy'.format(ns)):
-    Xa = filter_update(Xb, Yo, Ymask, Yloc, 'EnSRF', obs_err_std*np.ones(ns),
-                        get_local_cutoff(ns), get_local_dampen(ns), get_krange(ns), get_krange(ns), run_alignment=True)
-    err = diagnose(Xa, Xt)
-    np.save(outdir+dirname+scenario+'/EnSRF_s{}_mso.npy'.format(ns), err)
+
+##with mso krange_obs=get_krange(ns)
+# if ns>1 and not os.path.isfile(outdir+dirname+scenario+'/EnSRF_s{}_mso.npy'.format(ns)):
+#     Xa = filter_update(Xb, Yo, Ymask, Yloc, 'EnSRF', obs_err_std*np.ones(ns),
+#                         get_local_cutoff(ns), get_local_dampen(ns), get_krange(ns), get_krange(ns), run_alignment=True)
+#     err = diagnose(Xa, Xt)
+#     np.save(outdir+dirname+scenario+'/EnSRF_s{}_mso.npy'.format(ns), err)
