@@ -10,15 +10,16 @@ from config import *
 
 realize = 1 #int(sys.argv[1])
 
+Vbg = 0
 nobs = 500
 obs_range = 100
 loc_sprd = 5 #int(sys.argv[1])
+Vbg_err = 0
 ns = int(sys.argv[1])
 krange = get_krange(ns)
 krange_obs = get_krange(ns)
 
 np.random.seed(realize)
-Vbg = 5
 bkg_flow = gen_random_flow(ni, nj, nv, dx, Vbg, -3)
 
 ##truth
@@ -42,11 +43,12 @@ Xb = np.zeros((ni, nj, nv, nens))
 u = np.zeros((ni, nj, nv, nens))
 v = np.zeros((ni, nj, nv, nens))
 for m in range(nens):
-    # Xb[:, :, :, m] = bkg_flow + gen_random_flow(ni, nj, nv, dx, 0.0*Vbg, -3) + gen_vortex(ni, nj, nv, Vmax, Rmw, loc_sprd)
     u[:, :, :, m] = np.random.normal(0, loc_sprd)
     v[:, :, :, m] = np.random.normal(0, loc_sprd)
-    Xb[:, :, :, m] = Xt + gen_random_flow(ni, nj, nv, dx, 0.3*Vbg, -3)
+    Xb[:, :, :, m] = Xt
 Xb = warp(Xb, -u, -v)
+for m in range(nens):
+    Xb[:, :, :, m] += gen_random_flow(ni, nj, nv, dx, Vbg_err, -3)
 
 X = Xb.copy()
 X = filter_update(X, Yo, Ymask, Yloc, 'EnSRF', obs_err_std*np.ones(ns), get_local_cutoff(ns), get_local_dampen(ns), krange, krange_obs, run_alignment=True, update_scale=-1)
