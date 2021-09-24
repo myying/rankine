@@ -46,7 +46,7 @@ ppn=$SLURM_NTASKS_PER_NODE
 
 ###full network assimilation exps
 t=0
-for real in `seq 1 1000`; do
+for real in `seq 1 200`; do
     for loc_sprd in 1 3 5; do
         for phase_amp in "1.0 0.0" "0.5 0.5" "0.0 1.0"; do
             offset_node=`echo $t / $ppn |bc`
