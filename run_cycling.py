@@ -13,12 +13,12 @@ realize = int(sys.argv[1])
 filter_kind = sys.argv[2]  ##NoDA or EnSRF
 ns = int(sys.argv[3])    ##number of scales
 
-nens = get_equal_cost_nens(40, ns)
+nens = 20 #get_equal_cost_nens(40, ns)
 loc_sprd = 5
-bkg_phase_err = 1.0
-bkg_amp_err = 0.0
-network_type = 1
-model_kind = 'imperfect_model'
+bkg_phase_err = 0.5
+bkg_amp_err = 0.5
+network_type = 2
+model_kind = 'perfect_model'
 
 nobs, obs_range = gen_network(network_type)
 if model_kind == 'perfect_model':
