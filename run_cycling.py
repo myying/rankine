@@ -1,113 +1,121 @@
 #!/usr/bin/env python
 import numpy as np
 import sys
+import os
 from rankine_vortex import *
-from data_assimilation import *
 from obs_def import *
+from data_assimilation import *
 from multiscale import *
 from config import *
 
-##initialize ensemble members and truth
-Xt = np.zeros((ni, nj, nv, nt+1))
-Xt[:, :, :, 0] = gen_random_flow(ni, nj, nv, dx, Vbg, -3) + gen_vortex(ni, nj, nv, Vmax, Rmw, 0)
-
-##run truth simulation
-for t in range(nt):
-    print(t)
-    Xt[:, :, :, t+1] = advance_time(Xt[:, :, :, t], dx, dt, smalldt, gen, diss)
-
-##get true vortex features
-true_center = np.zeros((2, nt))
-true_intensity = np.zeros(nt)
-true_size = np.zeros(nt)
-for t in range(nt):
-    true_center[:, t] = vortex_center(Xt[:, :, :, t])
-    true_intensity[t] = vortex_intensity(Xt[:, :, :, t])
-    true_size[t] = vortex_size(Xt[:, :, :, t])
-
-
-##generate obs
-Yo = np.zeros((nobs*nv, nt))
-Ymask = np.zeros((nobs*nv, nt))
-Yloc = np.zeros((3, nobs*nv, nt))
-for t in range(nt):
-    ###first add random obs error to truth
-    Xo = Xt[:, :, :, t].copy()
-    for k in range(nv):
-        Xo[:, :, k] += obs_err_std * random_field(ni, obs_err_power_law)
-    ###interpolate to obs network
-    Yloc[:, :, t] = gen_obs_loc(ni, nj, nv, nobs)
-    Yo[:, t] = obs_interp2d(Xo, Yloc[:, :, t])
-    Ydist = get_dist(ni, nj, Yloc[0, :, t], Yloc[1, :, t], true_center[0, t], true_center[1, t])
-    Ymask[np.where(Ydist<=obs_range), t] = 1
-Yo[np.where(Ymask==0)] = 0.0
-
-
-##save data
-np.save(outdir+'Xt.npy', Xt)
-np.save(outdir+'truth_center.npy', true_center)
-np.save(outdir+'truth_intensity.npy', true_intensity)
-np.save(outdir+'truth_size.npy', true_size)
-np.save(outdir+'Yo.npy', Yo)
-np.save(outdir+'Yloc.npy', Yloc)
-np.save(outdir+'Ymask.npy', Ymask)
-
-Xt = np.load(outdir+'Xt.npy')
-true_center = np.load(outdir+'truth_center.npy')
-true_intensity = np.load(outdir+'truth_intensity.npy')
-true_size = np.load(outdir+'truth_size.npy')
-Yo = np.load(outdir+'Yo.npy')
-Yloc = np.load(outdir+'Yloc.npy')
-Ymask = np.load(outdir+'Ymask.npy')
-
-seed = int(sys.argv[1])  ##random seed
-filter_kind = sys.argv[2] #'NoDA'
+realize = int(sys.argv[1])
+filter_kind = sys.argv[2]  ##NoDA or EnSRF
 ns = int(sys.argv[3])    ##number of scales
 
-krange = (1,) # get_krange(ns)
-obs_err_infl = np.ones(ns)
-local_cutoff = 30*np.ones(ns)
-run_alignment = False
+nens = 20 #get_equal_cost_nens(30, ns)
+loc_sprd = 3
+bkg_phase_err = 1.0
+bkg_amp_err = 0.0
+network_type = 2
+model_kind = 'perfect_model'
 
-casename = filter_kind+'_s{}_{:05d}'.format(ns, seed)
+nobs, obs_range = gen_network(network_type)
+if model_kind == 'perfect_model':
+    gen_ens = gen*np.ones(nens)
+if model_kind == 'imperfect_model':
+    gen_ens = np.random.uniform(2, 6, nens)*1e-5
 
-np.random.seed(seed)
+np.random.seed(realize)
+dirname = 'cycling/{}/type{}/{:04d}'.format(model_kind, network_type, realize)
+if not os.path.exists(outdir+dirname):
+    os.makedirs(outdir+dirname)
 
-X = np.zeros((ni, nj, nv, nens, 2, nt+1))
-ens_center = np.zeros((2, nens+1, 2, nt))    ###storm location 0:x 1:y; 0:prior 1:posterior
-ens_intensity = np.zeros((nens+1, 2, nt))   ###vortex intensity from ensemble
-ens_size = np.zeros((nens+1, 2, nt))   ###vortex size
+##truth and observations
+if os.path.isfile(outdir+dirname+'/Xt.npy'):
+    bkg_flow = np.load(outdir+dirname+'/bkg_flow.npy')
+    vortex = np.load(outdir+dirname+'/vortex.npy')
+    Xt = np.load(outdir+dirname+'/Xt.npy')
+    true_center = np.load(outdir+dirname+'/true_center.npy')
+    true_intensity = np.load(outdir+dirname+'/true_intensity.npy')
+    true_size = np.load(outdir+dirname+'/true_size.npy')
+    Yo = np.load(outdir+dirname+'/Yo.npy')
+    Yloc = np.load(outdir+dirname+'/Yloc.npy')
+    Ymask = np.load(outdir+dirname+'/Ymask.npy')
+else:
+    ##generate truth
+    Xt = np.zeros((ni, nj, nv, nt+1))
+    bkg_flow = gen_random_flow(ni, nj, nv, dx, Vbg, -3)
+    vortex = gen_vortex(ni, nj, nv, Vmax, Rmw)
+    Xt[:, :, :, 0] = bkg_flow + vortex
+    Xt[:, :, :, 0] = gen_random_flow(ni, nj, nv, dx, Vbg, -3) + gen_vortex(ni, nj, nv, Vmax, Rmw, 0)
+    for t in range(nt):
+        Xt[:, :, :, t+1] = advance_time(Xt[:, :, :, t], dx, dt, smalldt, gen, diss)
+    true_center = np.zeros((2, nt))
+    true_intensity = np.zeros(nt)
+    true_size = np.zeros(nt)
+    for t in range(nt):
+        true_center[:, t] = vortex_center(Xt[:, :, :, t])
+        true_intensity[t] = vortex_intensity(Xt[:, :, :, t])
+        true_size[t] = vortex_size(Xt[:, :, :, t])
+    ##generate observations
+    Yo = np.zeros((nobs*nv, nt))
+    Ymask = np.zeros((nobs*nv, nt))
+    Yloc = np.zeros((3, nobs*nv, nt))
+    for t in range(nt):
+        Xo = Xt[:, :, :, t].copy()
+        for k in range(nv):
+            Xo[:, :, k] += obs_err_std * random_field(ni, obs_err_power_law)
+        Yloc[:, :, t] = gen_obs_loc(ni, nj, nv, nobs)
+        Yo[:, t] = obs_interp2d(Xo, Yloc[:, :, t])
+        Ydist = get_dist(ni, nj, Yloc[0, :, t], Yloc[1, :, t], true_center[0, t], true_center[1, t])
+        Ymask[np.where(Ydist<=obs_range), t] = 1
+        Yo[np.where(Ymask[:, t]==0), t] = 0.0
+    ##save files
+    np.save(outdir+dirname+'/bkg_flow.npy', bkg_flow)
+    np.save(outdir+dirname+'/vortex.npy', vortex)
+    np.save(outdir+dirname+'/Xt.npy', Xt)
+    np.save(outdir+dirname+'/true_center.npy', true_center)
+    np.save(outdir+dirname+'/true_intensity.npy', true_intensity)
+    np.save(outdir+dirname+'/true_size.npy', true_size)
+    np.save(outdir+dirname+'/Yo.npy', Yo)
+    np.save(outdir+dirname+'/Yloc.npy', Yloc)
+    np.save(outdir+dirname+'/Ymask.npy', Ymask)
 
+scenario = "/Lsprd{}/phase{}_amp{}".format(loc_sprd, bkg_phase_err, bkg_amp_err)
+if not os.path.exists(outdir+dirname+scenario):
+    os.makedirs(outdir+dirname+scenario)
+
+##Prior ensemble
+np.random.seed(realize)
+bkg_flow_ens = np.zeros((ni, nj, nv, nens))
+vortex_ens = np.zeros((ni, nj, nv, nens))
+u = np.zeros((ni, nj, nv, nens))
+v = np.zeros((ni, nj, nv, nens))
 for m in range(nens):
-    X[:, :, :, m, 0, 0] = gen_random_flow(ni, nj, nv, dx, Vbg, -3) + gen_vortex(ni, nj, nv, Vmax, Rmw, loc_sprd)
+    u[:, :, :, m] = np.random.normal(0, loc_sprd)
+    v[:, :, :, m] = np.random.normal(0, loc_sprd)
+    vortex_ens[:, :, :, m] = vortex
+    bkg_flow_ens[:, :, :, m] = bkg_flow
+vortex_ens = warp(vortex_ens, -u, -v)
+bkg_flow_ens = warp(bkg_flow_ens, -u*bkg_phase_err, -v*bkg_phase_err)
+for m in range(nens):
+    bkg_flow_ens[:, :, :, m] += gen_random_flow(ni, nj, nv, dx, 0.6*Vbg*bkg_amp_err, -3)
+X = bkg_flow_ens + vortex_ens
 
-##start cycling
-for t in range(nt):
-    ###analysis cycle
-    if t>0 and t%obs_t_intv==0 and filter_kind!='NoDA':
-        print('running '+filter_kind+' for t={}'.format(t))
-        X[:, :, :, :, 1, t] = filter_update(X[:, :, :, :, 0, t], Yo[:, t], Ymask[:, t], Yloc[:, :, t],
-                                         filter_kind, obs_err_std*obs_err_infl, local_cutoff,
-                                         krange, run_alignment)
-    else:
-        X[:, :, :, :, 1, t] = X[:, :, :, :, 0, t]
+if not os.path.isfile(outdir+dirname+scenario+'/{}_s{}.npy'.format(filter_kind, ns)):
+    err = np.zeros((nens+1, 4, 2, nt))
+    ##start cycling
+    for t in range(nt):
+        ##diagnose prior
+        err[:, :, 0, t] = diagnose(X, Xt[:, :, :, t])
+        ##run filter update
+        if filter_kind=='EnSRF' and t>0 and t<10 and t%obs_t_intv==0:
+            X = filter_update(X, Yo[:, t], Ymask[:, t], Yloc[:, :, t], 'EnSRF', obs_err_std*np.ones(ns),
+                              get_local_cutoff(ns), get_local_dampen(ns), get_krange(ns), get_krange(1), run_alignment=True)
+        ##diagnose posterior
+        err[:, :, 1, t] = diagnose(X, Xt[:, :, :, t])
+        ##run forecast
+        X = advance_time(X, dx, dt, smalldt, gen_ens, diss)
+    ##save diagnose file
+    np.save(outdir+dirname+scenario+'/{}_s{}.npy'.format(filter_kind, ns), err)
 
-    ###run model forecast
-    print('running forecast t={}'.format(t))
-    X[:, :, :, :, 0, t+1] = advance_time(X[:, :, :, :, 1, t], dx, dt, smalldt, gen, diss)
-
-    ##diagnose
-    for i in range(2):
-        for m in range(nens):
-            ens_center[:, m, i, t] = vortex_center(X[:, :, :, m, i, t])
-            ens_intensity[m, i, t] = vortex_intensity(X[:, :, :, m, i, t])
-            ens_size[m, i, t] = vortex_size(X[:, :, :, m, i, t])
-        ens_center[:, nens, i, t] = vortex_center(np.mean(X[:, :, :, :, i, t], axis=3))
-        ens_intensity[nens, i, t] = vortex_intensity(np.mean(X[:, :, :, :, i, t], axis=3))
-        ens_size[nens, i, t] = vortex_size(np.mean(X[:, :, :, :, i, t], axis=3))
-        state_err[]
-
-    np.save(outdir+'cycle/'+casename+'_X.npy', X)
-    np.save(outdir+'cycle/'+casename+'_center.npy', ens_center)
-    np.save(outdir+'cycle/'+casename+'_intensity.npy', ens_intensity)
-    np.save(outdir+'cycle/'+casename+'_size.npy', ens_size)

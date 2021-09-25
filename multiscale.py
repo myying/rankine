@@ -128,3 +128,13 @@ def get_local_dampen(ns):
     if ns==7:
         local_dampen = (0.3, 0.3, 0.4, 0.5, 0.7, 0.8, 0.8)
     return local_dampen
+
+###
+def get_equal_cost_nens(nens, ns):
+    kr = get_krange(ns)
+    factor = 0
+    for wn in kr:
+        factor += 1/2**(2*(get_clev(wn)-1))
+    nens1 = int(nens/factor)
+    return nens1
+
