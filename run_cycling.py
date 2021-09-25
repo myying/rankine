@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import numpy as np
+import matplotlib.pyplot as plt
 import sys
 import os
 from rankine_vortex import *
@@ -12,7 +13,7 @@ realize = int(sys.argv[1])
 filter_kind = sys.argv[2]  ##NoDA or EnSRF
 ns = int(sys.argv[3])    ##number of scales
 
-nens = 20 #get_equal_cost_nens(30, ns)
+nens = get_equal_cost_nens(20, ns)
 loc_sprd = 3
 bkg_phase_err = 1.0
 bkg_amp_err = 0.0
@@ -47,7 +48,6 @@ else:
     bkg_flow = gen_random_flow(ni, nj, nv, dx, Vbg, -3)
     vortex = gen_vortex(ni, nj, nv, Vmax, Rmw)
     Xt[:, :, :, 0] = bkg_flow + vortex
-    Xt[:, :, :, 0] = gen_random_flow(ni, nj, nv, dx, Vbg, -3) + gen_vortex(ni, nj, nv, Vmax, Rmw, 0)
     for t in range(nt):
         Xt[:, :, :, t+1] = advance_time(Xt[:, :, :, t], dx, dt, smalldt, gen, diss)
     true_center = np.zeros((2, nt))
@@ -104,16 +104,31 @@ X = bkg_flow_ens + vortex_ens
 
 if not os.path.isfile(outdir+dirname+scenario+'/{}_s{}.npy'.format(filter_kind, ns)):
     err = np.zeros((nens+1, 4, 2, nt))
+
     ##start cycling
     for t in range(nt):
+        # print(t)
         ##diagnose prior
         err[:, :, 0, t] = diagnose(X, Xt[:, :, :, t])
         ##run filter update
-        if filter_kind=='EnSRF' and t>0 and t<10 and t%obs_t_intv==0:
+        if filter_kind=='EnSRF' and t<10 and t%obs_t_intv==0:
             X = filter_update(X, Yo[:, t], Ymask[:, t], Yloc[:, :, t], 'EnSRF', obs_err_std*np.ones(ns),
                               get_local_cutoff(ns), get_local_dampen(ns), get_krange(ns), get_krange(1), run_alignment=True)
         ##diagnose posterior
         err[:, :, 1, t] = diagnose(X, Xt[:, :, :, t])
+
+        # plt.figure(figsize=(12, 10))
+        # ax = plt.subplot(111)
+        # ii, jj = np.mgrid[0:ni, 0:nj]
+        # cmap = [plt.cm.jet(m) for m in np.linspace(0.2, 0.8, nens)]
+        # for m in range(0, nens, int(nens/20)):
+        #     wspd = np.sqrt(X[:, :, 0, m]**2+X[:, :, 1, m]**2)
+        #     ax.contour(ii, jj, wspd, (20,), colors=[cmap[m][0:3]], linewidths=2)
+        # wspd = np.sqrt(Xt[:, :, 0, t]**2+Xt[:, :, 1, t]**2)
+        # ax.contour(ii, jj, wspd, (20,), colors='k', linewidths=3)
+        # ax.set_aspect('equal', 'box')
+        # plt.show()
+
         ##run forecast
         X = advance_time(X, dx, dt, smalldt, gen_ens, diss)
     ##save diagnose file
