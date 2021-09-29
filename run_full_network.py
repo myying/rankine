@@ -14,7 +14,6 @@ nens = 20 # ensemble size
 loc_bias = 0
 loc_sprd = int(sys.argv[2])
 bkg_phase_err = float(sys.argv[3])
-bkg_amp_err = float(sys.argv[4])
 
 network_type = 1 
 nobs, obs_range = gen_network(network_type)
@@ -55,7 +54,7 @@ else:
     np.save(outdir+dirname+'/Yloc.npy', Yloc)
     np.save(outdir+dirname+'/Ymask.npy', Ymask)
 
-scenario = "/Lbias{}/Lsprd{}/phase{}_amp{}/N{}".format(loc_bias, loc_sprd, bkg_phase_err, bkg_amp_err, nens)
+scenario = "/Lbias{}/Lsprd{}/phase{}/N{}".format(loc_bias, loc_sprd, bkg_phase_err, nens)
 if not os.path.exists(outdir+dirname+scenario):
     os.makedirs(outdir+dirname+scenario)
 
@@ -72,7 +71,7 @@ for m in range(nens):
 vortex_ens = warp(vortex_ens, -u, -v)
 bkg_flow_ens = warp(bkg_flow_ens, -u*bkg_phase_err, -v*bkg_phase_err)
 for m in range(nens):
-    bkg_flow_ens[:, :, :, m] += gen_random_flow(ni, nj, nv, dx, 0.6*Vbg*bkg_amp_err, -3)
+    bkg_flow_ens[:, :, :, m] += gen_random_flow(ni, nj, nv, dx, 0.6*Vbg*(1-bkg_phase_err), -3)
 Xb = bkg_flow_ens + vortex_ens
 
 if not os.path.isfile(outdir+dirname+scenario+'/NoDA.npy'):

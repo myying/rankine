@@ -10,7 +10,6 @@ from config import *
 
 realize = 1 #int(sys.argv[1])
 
-bkg_amp_err = 1.0
 bkg_phase_err = 0.0
 loc_sprd = 5
 
@@ -53,7 +52,7 @@ for m in range(nens):
 vortex_ens = warp(vortex_ens, -u, -v)
 bkg_flow_ens = warp(bkg_flow_ens, -u*bkg_phase_err, -v*bkg_phase_err)
 for m in range(nens):
-    bkg_flow_ens[:, :, :, m] += gen_random_flow(ni, nj, nv, dx, 0.6*Vbg*bkg_amp_err, -3)
+    bkg_flow_ens[:, :, :, m] += gen_random_flow(ni, nj, nv, dx, 0.6*Vbg*(1-bkg_phase_err), -3)
 Xb = bkg_flow_ens + vortex_ens
 
 X = Xb.copy()
