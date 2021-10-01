@@ -64,7 +64,7 @@ for i in range(len(local_cutoff_try)):
         print(local_cutoff_try[i], local_dampen_try[j])
         X = filter_update(Xb, Yo, Ymask, Yloc, 'EnSRF', obs_err_std*np.ones(ns),
                           local_cutoff_try[i]*np.ones(ns), local_dampen_try[j]*np.ones(ns),
-                          get_krange(ns), get_krange(ns), run_alignment=False, print_out=False, update_scale=update_s, obs_scale=0)
+                          get_krange(ns), get_krange(ns), run_alignment=False, print_out=False, update_scale=update_s)
         rmse[i, j] = mean_rmse(X, Xt)
         sprd[i, j] = ens_sprd(X)
         np.save(outdir+dirname+scenario+'/rmse.npy', rmse)

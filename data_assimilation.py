@@ -6,7 +6,7 @@ from multiscale import *
 
 ##top-level wrapper for update at one analysis cycle:
 def filter_update(Xb, Yo, Ymask, Yloc, filter_kind, obs_err_std, local_cutoff, local_dampen,
-                  krange, krange_obs, run_alignment, print_out=False, update_scale=-1, obs_scale=-1):
+                  krange, krange_obs, run_alignment, print_out=False, update_scale=-1):
     X = Xb.copy()
     ni, nj, nv, nens = Xb.shape
     nobs = Yo.size
@@ -18,10 +18,6 @@ def filter_update(Xb, Yo, Ymask, Yloc, filter_kind, obs_err_std, local_cutoff, l
         ss = range(ns)
     else:
         ss = (update_scale,)
-    if obs_scale==-1:
-        oss = range(ns_obs)
-    else:
-        oss = (obs_scale,)
 
     ###loop over state scale components
     for s in ss:
@@ -32,7 +28,7 @@ def filter_update(Xb, Yo, Ymask, Yloc, filter_kind, obs_err_std, local_cutoff, l
 
         Xas = Xbs.copy()
         ###loop over obs scale components
-        for r in oss:
+        for r in (s,):  ##only assimilate r=s here, can also loop over range(ns_obs).
             ##get scale component for obs
             Yos = obs_get_scale(ni, nj, nv, Yo, Ymask, Yloc, krange_obs, r)
             ##get scale component for obs prior
@@ -44,12 +40,9 @@ def filter_update(Xb, Yo, Ymask, Yloc, filter_kind, obs_err_std, local_cutoff, l
             obs_err_scale = get_obs_err_scale(ni, nj, nv, nobs, krange_obs, r)
             nobs1 = get_nobs_thin(krange_obs[r], ni, nj, nobs)
 
-            cutoff = np.minimum(local_cutoff[s], local_cutoff[r])
-            dampen = local_dampen[s]*(0.5**np.abs(s-r))
-
             if filter_kind=='EnSRF':
                 Xas = EnSRF(Xas, Xloc, Ybs[0:nobs1], Yos[0:nobs1], Ymask[0:nobs1], Yloc[:, 0:nobs1],
-                            obs_err_std[s]*obs_err_scale, cutoff, dampen, print_out)
+                            obs_err_std[s]*obs_err_scale, local_cutoff[s], local_dampen[s], print_out)
             if filter_kind=='PF':
                 Xas = PF(Xas, Xloc, Ybs[0:nobs1], Yos[0:nobs1], Ymask[0:nobs1], Yloc[:, 0:nobs1], obs_err_std[s]*obs_err_scale)
 
