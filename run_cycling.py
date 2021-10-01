@@ -14,24 +14,26 @@ filter_kind = sys.argv[2]  ##NoDA or EnSRF
 ns = int(sys.argv[3])    ##number of scales
 
 nens = 20 #get_equal_cost_nens(40, ns)
-loc_sprd = 5
-bkg_phase_err = 0.5
-bkg_amp_err = 0.5
+loc_sprd = 1
 network_type = 2
-model_kind = 'perfect_model'
-
-nobs, obs_range = gen_network(network_type)
-if model_kind == 'perfect_model':
-    gen_ens = gen*np.ones(nens)
-if model_kind == 'imperfect_model':
-    gen_ens = np.random.uniform(2, 6, nens)*1e-5
+model_kind = 'imperfect_model'
 
 np.random.seed(realize)
 dirname = 'cycling/{}/type{}/{:04d}'.format(model_kind, network_type, realize)
 if not os.path.exists(outdir+dirname):
     os.makedirs(outdir+dirname)
 
+if os.path.isfile(outdir+dirname+'/gen_ens.npy'):
+    gen_ens = np.load(outdir+dirname+'/gen_ens.npy')
+else:
+    if model_kind == 'perfect_model':
+        gen_ens = gen*np.ones(nens)
+    if model_kind == 'imperfect_model':
+        gen_ens = np.random.uniform(2, 6, nens)*1e-5
+    np.save(outdir+dirname+'/gen_ens.npy', gen_ens)
+
 ##truth and observations
+nobs, obs_range = gen_network(network_type)
 if os.path.isfile(outdir+dirname+'/Xt.npy'):
     bkg_flow = np.load(outdir+dirname+'/bkg_flow.npy')
     vortex = np.load(outdir+dirname+'/vortex.npy')
@@ -81,7 +83,7 @@ else:
     np.save(outdir+dirname+'/Yloc.npy', Yloc)
     np.save(outdir+dirname+'/Ymask.npy', Ymask)
 
-scenario = "/Lsprd{}/phase{}_amp{}".format(loc_sprd, bkg_phase_err, bkg_amp_err)
+scenario = "/Lsprd{}".format(loc_sprd)
 if not os.path.exists(outdir+dirname+scenario):
     os.makedirs(outdir+dirname+scenario)
 
@@ -97,9 +99,9 @@ for m in range(nens):
     vortex_ens[:, :, :, m] = vortex
     bkg_flow_ens[:, :, :, m] = bkg_flow
 vortex_ens = warp(vortex_ens, -u, -v)
-bkg_flow_ens = warp(bkg_flow_ens, -u*bkg_phase_err, -v*bkg_phase_err)
+bkg_flow_ens = warp(bkg_flow_ens, -u, -v)
 for m in range(nens):
-    bkg_flow_ens[:, :, :, m] += gen_random_flow(ni, nj, nv, dx, 0.6*Vbg*bkg_amp_err, -3)
+    bkg_flow_ens[:, :, :, m] += gen_random_flow(ni, nj, nv, dx, 0.3*Vbg, -3)
 X = bkg_flow_ens + vortex_ens
 
 if not os.path.isfile(outdir+dirname+scenario+'/{}_s{}.npy'.format(filter_kind, ns)):
@@ -111,23 +113,24 @@ if not os.path.isfile(outdir+dirname+scenario+'/{}_s{}.npy'.format(filter_kind, 
         ##diagnose prior
         err[:, :, 0, t] = diagnose(X, Xt[:, :, :, t])
         ##run filter update
-        if filter_kind=='EnSRF' and t<10 and t%obs_t_intv==0:
+        if filter_kind=='EnSRF' and t>0 and t%obs_t_intv==0:
             X = filter_update(X, Yo[:, t], Ymask[:, t], Yloc[:, :, t], 'EnSRF', obs_err_std*np.ones(ns),
                               get_local_cutoff(ns), get_local_dampen(ns), get_krange(ns), get_krange(1), run_alignment=True)
         ##diagnose posterior
         err[:, :, 1, t] = diagnose(X, Xt[:, :, :, t])
 
-        # plt.figure(figsize=(12, 10))
-        # ax = plt.subplot(111)
-        # ii, jj = np.mgrid[0:ni, 0:nj]
-        # cmap = [plt.cm.jet(m) for m in np.linspace(0.2, 0.8, nens)]
-        # for m in range(0, nens, int(nens/20)):
-        #     wspd = np.sqrt(X[:, :, 0, m]**2+X[:, :, 1, m]**2)
-        #     ax.contour(ii, jj, wspd, (20,), colors=[cmap[m][0:3]], linewidths=2)
-        # wspd = np.sqrt(Xt[:, :, 0, t]**2+Xt[:, :, 1, t]**2)
-        # ax.contour(ii, jj, wspd, (20,), colors='k', linewidths=3)
-        # ax.set_aspect('equal', 'box')
-        # plt.show()
+        plt.figure(figsize=(12, 10))
+        ax = plt.subplot(111)
+        ii, jj = np.mgrid[0:ni, 0:nj]
+        cmap = [plt.cm.jet(m) for m in np.linspace(0.2, 0.8, nens)]
+        for m in range(0, nens, int(nens/20)):
+            wspd = np.sqrt(X[:, :, 0, m]**2+X[:, :, 1, m]**2)
+            ax.contour(ii, jj, wspd, (20,), colors=[cmap[m][0:3]], linewidths=2)
+        wspd = np.sqrt(Xt[:, :, 0, t]**2+Xt[:, :, 1, t]**2)
+        ax.contour(ii, jj, wspd, (20,), colors='k', linewidths=3)
+        ax.set_aspect('equal', 'box')
+        ax.set_title('{}_s{} at t={}, err={:7.5f}, {:7.5f}, {:7.5f}'.format(filter_kind, ns, t, err[-1, 0, 1, t], np.mean(err[0:20, 1, 1, t]), np.mean(err[0:20, 2, 1, t])))
+        plt.show()
 
         ##run forecast
         X = advance_time(X, dx, dt, smalldt, gen_ens, diss)
