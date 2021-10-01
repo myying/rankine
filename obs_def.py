@@ -6,8 +6,8 @@ def gen_network(network_type):
         nobs = 500
         obs_range = 100
     if network_type==2:  ##targeted network
-        nobs = 2000
-        obs_range = 30
+        nobs = 800
+        obs_range = 20
     return nobs, obs_range
 
 def gen_obs_loc(ni, nj, nv, nobs):
