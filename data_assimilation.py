@@ -33,25 +33,26 @@ def filter_update(Xb, Yo, Ymask, Yloc, filter_kind, obs_err_std, local_cutoff, l
         Xas = Xbs.copy()
         ###loop over obs scale components
         for r in oss:
-            ##get scale component for obs
-            Yos = obs_get_scale(ni, nj, nv, Yo, Ymask, Yloc, krange_obs, r)
-            ##get scale component for obs prior
-            Ybs = np.zeros((nobs, nens))
-            for m in range(nens):
-                Ybm = obs_forward(X[:, :, :, m], Yloc)
-                Ybm[np.where(Ymask==0)] = 0.0
-                Ybs[:, m] = obs_get_scale(ni, nj, nv, Ybm, Ymask, Yloc, krange_obs, r)
-            obs_err_scale = get_obs_err_scale(ni, nj, nv, nobs, krange_obs, r)
-            nobs1 = get_nobs_thin(krange_obs[r], ni, nj, nobs)
+            if r==s or ns_obs==1:
+                ##get scale component for obs
+                Yos = obs_get_scale(ni, nj, nv, Yo, Ymask, Yloc, krange_obs, r)
+                ##get scale component for obs prior
+                Ybs = np.zeros((nobs, nens))
+                for m in range(nens):
+                    Ybm = obs_forward(X[:, :, :, m], Yloc)
+                    Ybm[np.where(Ymask==0)] = 0.0
+                    Ybs[:, m] = obs_get_scale(ni, nj, nv, Ybm, Ymask, Yloc, krange_obs, r)
+                obs_err_scale = get_obs_err_scale(ni, nj, nv, nobs, krange_obs, r)
+                nobs1 = get_nobs_thin(krange_obs[r], ni, nj, nobs)
 
-            cutoff = np.minimum(local_cutoff[s], local_cutoff[r])
-            dampen = local_dampen[s]*(0.5**np.abs(s-r))
+                cutoff = np.minimum(local_cutoff[s], local_cutoff[r])
+                dampen = local_dampen[s]*(0.5**np.abs(s-r))
 
-            if filter_kind=='EnSRF':
-                Xas = EnSRF(Xas, Xloc, Ybs[0:nobs1], Yos[0:nobs1], Ymask[0:nobs1], Yloc[:, 0:nobs1],
-                            obs_err_std[s]*obs_err_scale, cutoff, dampen, print_out)
-            if filter_kind=='PF':
-                Xas = PF(Xas, Xloc, Ybs[0:nobs1], Yos[0:nobs1], Ymask[0:nobs1], Yloc[:, 0:nobs1], obs_err_std[s]*obs_err_scale)
+                if filter_kind=='EnSRF':
+                    Xas = EnSRF(Xas, Xloc, Ybs[0:nobs1], Yos[0:nobs1], Ymask[0:nobs1], Yloc[:, 0:nobs1],
+                                obs_err_std[s]*obs_err_scale, cutoff, dampen, print_out)
+                if filter_kind=='PF':
+                    Xas = PF(Xas, Xloc, Ybs[0:nobs1], Yos[0:nobs1], Ymask[0:nobs1], Yloc[:, 0:nobs1], obs_err_std[s]*obs_err_scale)
 
         if s < ns-1 and run_alignment:
             us, vs = optical_flow(Xbs, Xas, nlevel=3, w=1)

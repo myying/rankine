@@ -12,6 +12,7 @@ from config import *
 realize = int(sys.argv[1])
 filter_kind = sys.argv[2]  ##NoDA or EnSRF
 ns = int(sys.argv[3])    ##number of scales
+ns_obs = int(sys.argv[4])
 
 nens = get_equal_cost_nens(30, ns)
 loc_sprd = 3
@@ -100,10 +101,10 @@ for m in range(nens):
 vortex_ens = warp(vortex_ens, -u, -v)
 bkg_flow_ens = warp(bkg_flow_ens, -u, -v)
 for m in range(nens):
-    bkg_flow_ens[:, :, :, m] += gen_random_flow(ni, nj, nv, dx, 0.1*Vbg, -3)
+    bkg_flow_ens[:, :, :, m] += gen_random_flow(ni, nj, nv, dx, 0.3*Vbg, -3)
 X = bkg_flow_ens + vortex_ens
 
-if not os.path.isfile(outdir+dirname+scenario+'/{}_s{}.npy'.format(filter_kind, ns)):
+if not os.path.isfile(outdir+dirname+scenario+'/{}_s{}{}.npy'.format(filter_kind, ns, ns_obs)):
     err = np.zeros((nens+1, 4, 2, nt))
 
     ##start cycling
@@ -114,7 +115,7 @@ if not os.path.isfile(outdir+dirname+scenario+'/{}_s{}.npy'.format(filter_kind, 
         ##run filter update
         if filter_kind=='EnSRF' and t>0 and t%obs_t_intv==0:
             X = filter_update(X, Yo[:, t], Ymask[:, t], Yloc[:, :, t], 'EnSRF', obs_err_std*np.ones(ns),
-                              get_local_cutoff(ns), get_local_dampen(ns), get_krange(ns), get_krange(1), run_alignment=True)
+                              get_local_cutoff(ns), get_local_dampen(ns), get_krange(ns), get_krange(ns_obs), run_alignment=True)
         ##diagnose posterior
         err[:, :, 1, t] = diagnose(X, Xt[:, :, :, t])
 
@@ -128,11 +129,11 @@ if not os.path.isfile(outdir+dirname+scenario+'/{}_s{}.npy'.format(filter_kind, 
         wspd = np.sqrt(Xt[:, :, 0, t]**2+Xt[:, :, 1, t]**2)
         ax.contour(ii, jj, wspd, (20,), colors='k', linewidths=3)
         ax.set_aspect('equal', 'box')
-        ax.set_title('{}_s{} at t={}, err={:7.5f}, {:7.5f}, {:7.5f}'.format(filter_kind, ns, t, err[nens, 0, 1, t], np.mean(err[0:nens, 1, 1, t]), np.mean(err[0:nens, 2, 1, t])))
+        ax.set_title('{}_s{},{} at t={}, err={:7.5f}, {:7.5f}, {:7.5f}'.format(filter_kind, ns, ns_obs, t, err[nens, 0, 1, t], np.mean(err[0:nens, 1, 1, t]), np.mean(err[0:nens, 2, 1, t])))
         plt.show()
 
         ##run forecast
         X = advance_time(X, dx, dt, smalldt, gen_ens, diss)
     ##save diagnose file
-    np.save(outdir+dirname+scenario+'/{}_s{}.npy'.format(filter_kind, ns), err)
+    np.save(outdir+dirname+scenario+'/{}_s{}{}.npy'.format(filter_kind, ns, ns_obs), err)
 
