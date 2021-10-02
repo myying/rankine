@@ -9,7 +9,7 @@ nens = 20
 Lsprd = (1, 3, 5)
 Lbias = 0
 expname = ('full_network/type1', 'full_network/type2')
-scenario = ('phase1.0_amp0.0', 'phase1.0_amp0.0')
+scenario = ('phase1.0', 'phase1.0')
 nreal = (100, 100)
 
 fig, ax = plt.subplots(4, 2, figsize=(12, 12))
@@ -31,6 +31,8 @@ for j in range(2):
                 fc = [1, 1, 1]
                 if c==0:
                     fc = [.7, .7, .7]
+                if c in (2, 4, 6):
+                    fc = [.9, .8, .6]
                 if c in (3, 5, 7):
                     fc = [.8, .4, .4]
                 ax[i, j].add_patch(Polygon([(x-0.04,q1), (x-0.04,q3), (x+0.04,q3), (x+0.04,q1)], facecolor=fc, ec='black'))

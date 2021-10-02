@@ -4,10 +4,10 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon
 from config import *
 
-# cases = ('NoDA_s1_1', 'EnSRF_s1_1', 'EnSRF_s2_1', 'EnSRF_s2_2', 'EnSRF_s3_1', 'EnSRF_s3_3', 'EnSRF_s4_1', 'EnSRF_s4_4')
-# nens = (30, 30, 28, 28, 25, 25, 22, 22)
 cases = ('NoDA_s1_1', 'EnSRF_s1_1', 'EnSRF_s3_1', 'EnSRF_s3_3')
-colors = ([.7, .7, .7], 'k', [0, 1, 0], [.8, .4, .4])
+casename = ('NoDA', 'EnSRF', 'EnSRF_MSA_3', 'EnSRF_MSAO_3')
+colors = ([.7, .7, .7], [0, 0, 0], [.9, .8, .6], [.8, .4, .4])
+linewidths = (3, 3, 2, 2)
 nens = (30, 30, 25, 25)
 expname = ('cycling/perfect_model/type2', 'cycling/perfect_model/type2', 'cycling/imperfect_model/type2')
 scenario = ('Lsprd3/phase1.0', 'Lsprd3/phase0.0', 'Lsprd3/phase1.0')
@@ -32,15 +32,14 @@ for j in range(3):
             r1 += 1
         for i in range(4):
             mean_err_ts = np.mean(rmse[0:r1, :, i], axis=0)
-            ax[i, j].plot(ts, mean_err_ts, color=colors[c])
-# ymax = (1.8, 45, 8, 10)
-# for j in range(1):
-    # for i in range(4):
-        # ax[i, j].grid()
-        # ax[i, j].set_xlim([0, len(Lsprd)])
-        # ax[i, j].set_ylim([0, ymax[i]])
-        # ax[i, j].set_xticks([0, 1, 2])
-        # ax[i, j].set_xticklabels([])
-        # ax[i, j].set_axisbelow(True)
-        # ax[i, j].tick_params(labelsize=12)
+            ax[i, j].plot(ts, mean_err_ts, color=colors[c], linewidth=linewidths[c], label=casename[c])
+            if i==3 and j==2:
+                ax[i, j].legend(fontsize=12)
+ymax = (5, 55, 20, 10)
+for j in range(3):
+    for i in range(4):
+        ax[i, j].set_xlim([0, nt])
+        ax[i, j].set_ylim([0, ymax[i]])
+        ax[i, j].set_xticks([0, 3, 6, 9, 12])
+        ax[i, j].tick_params(labelsize=12)
 plt.savefig('out.pdf')

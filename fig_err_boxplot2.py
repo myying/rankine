@@ -9,7 +9,7 @@ nens = 20
 Lsprd = (1, 3, 5)
 Lbias = 0
 expname = ('full_network/type1', 'full_network/type1', 'full_network/type1')
-scenario = ('phase1.0_amp0.0', 'phase0.5_amp0.5', 'phase0.0_amp1.0')
+scenario = ('phase1.0', 'phase0.5', 'phase0.0')
 nreal = (100, 100, 100)
 
 fig, ax = plt.subplots(4, 3, figsize=(12, 12))
@@ -28,10 +28,11 @@ for j in range(3):
                 x = l + c*0.1 + 0.1
                 q3, q1 = np.percentile(rmse[0:r1, i], [75, 25])
                 median = np.median(rmse[0:r1, i])
+                fc = [1, 1, 1]
                 if c==0:
                     fc = [.7, .7, .7]
-                else:
-                    fc = [1, 1, 1]
+                if c in (2, 3, 4, 5, 6, 7):
+                    fc = [.9, .8, .6]
                 ax[i, j].add_patch(Polygon([(x-0.04,q1), (x-0.04,q3), (x+0.04,q3), (x+0.04,q1)], facecolor=fc, ec='black'))
                 ax[i, j].plot(x, median, marker='.', color='black')
 ymax = (1.8, 45, 8, 10)
