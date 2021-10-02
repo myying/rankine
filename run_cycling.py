@@ -17,7 +17,8 @@ ns_obs = int(sys.argv[4])
 nens = get_equal_cost_nens(30, ns)
 loc_sprd = 3
 network_type = 2
-model_kind = 'perfect_model'
+bkg_phase_err = 0.0  ##or 1.0
+model_kind = 'perfect_model' #or imperfect_model
 
 np.random.seed(realize)
 dirname = 'cycling/{}/type{}/{:04d}'.format(model_kind, network_type, realize)
@@ -83,7 +84,7 @@ else:
     np.save(outdir+dirname+'/Yloc.npy', Yloc)
     np.save(outdir+dirname+'/Ymask.npy', Ymask)
 
-scenario = "/Lsprd{}".format(loc_sprd)
+scenario = "/Lsprd{}/phase{}".format(loc_sprd, bkg_phase_err)
 if not os.path.exists(outdir+dirname+scenario):
     os.makedirs(outdir+dirname+scenario)
 
@@ -99,12 +100,12 @@ for m in range(nens):
     vortex_ens[:, :, :, m] = vortex
     bkg_flow_ens[:, :, :, m] = bkg_flow
 vortex_ens = warp(vortex_ens, -u, -v)
-bkg_flow_ens = warp(bkg_flow_ens, -u, -v)
+bkg_flow_ens = warp(bkg_flow_ens, -u*bkg_phase_err, -v*bkg_phase_err)
 for m in range(nens):
-    bkg_flow_ens[:, :, :, m] += gen_random_flow(ni, nj, nv, dx, 0.3*Vbg, -3)
+    bkg_flow_ens[:, :, :, m] += gen_random_flow(ni, nj, nv, dx, 0.3*Vbg*(2-bkg_phase_err), -3)
 X = bkg_flow_ens + vortex_ens
 
-if not os.path.isfile(outdir+dirname+scenario+'/{}_s{}{}.npy'.format(filter_kind, ns, ns_obs)):
+if not os.path.isfile(outdir+dirname+scenario+'/{}_s{}_{}.npy'.format(filter_kind, ns, ns_obs)):
     err = np.zeros((nens+1, 4, 2, nt))
 
     ##start cycling
@@ -112,6 +113,7 @@ if not os.path.isfile(outdir+dirname+scenario+'/{}_s{}{}.npy'.format(filter_kind
         # print(t)
         ##diagnose prior
         err[:, :, 0, t] = diagnose(X, Xt[:, :, :, t])
+
         ##run filter update
         if filter_kind=='EnSRF' and t>0 and t%obs_t_intv==0:
             X = filter_update(X, Yo[:, t], Ymask[:, t], Yloc[:, :, t], 'EnSRF', obs_err_std*np.ones(ns),
@@ -119,21 +121,22 @@ if not os.path.isfile(outdir+dirname+scenario+'/{}_s{}{}.npy'.format(filter_kind
         ##diagnose posterior
         err[:, :, 1, t] = diagnose(X, Xt[:, :, :, t])
 
-        plt.figure(figsize=(5,5))
-        ax = plt.subplot(111)
-        ii, jj = np.mgrid[0:ni, 0:nj]
-        cmap = [plt.cm.jet(m) for m in np.linspace(0.2, 0.8, nens)]
-        for m in range(nens):
-            wspd = np.sqrt(X[:, :, 0, m]**2+X[:, :, 1, m]**2)
-            ax.contour(ii, jj, wspd, (20,), colors=[cmap[m][0:3]], linewidths=2)
-        wspd = np.sqrt(Xt[:, :, 0, t]**2+Xt[:, :, 1, t]**2)
-        ax.contour(ii, jj, wspd, (20,), colors='k', linewidths=3)
-        ax.set_aspect('equal', 'box')
-        ax.set_title('{}_s{},{} at t={}, err={:7.5f}, {:7.5f}, {:7.5f}'.format(filter_kind, ns, ns_obs, t, err[nens, 0, 1, t], np.mean(err[0:nens, 1, 1, t]), np.mean(err[0:nens, 2, 1, t])))
-        plt.show()
+        # plt.figure(figsize=(5,5))
+        # ax = plt.subplot(111)
+        # ii, jj = np.mgrid[0:ni, 0:nj]
+        # cmap = [plt.cm.jet(m) for m in np.linspace(0.2, 0.8, nens)]
+        # for m in range(nens):
+        #     wspd = np.sqrt(X[:, :, 0, m]**2+X[:, :, 1, m]**2)
+        #     ax.contour(ii, jj, wspd, (20,), colors=[cmap[m][0:3]], linewidths=2)
+        # wspd = np.sqrt(Xt[:, :, 0, t]**2+Xt[:, :, 1, t]**2)
+        # ax.contour(ii, jj, wspd, (20,), colors='k', linewidths=3)
+        # ax.set_aspect('equal', 'box')
+        # ax.set_title('{}_s{},{} at t={}, err={:7.5f}, {:7.5f}, {:7.5f}'.format(filter_kind, ns, ns_obs, t, err[nens, 0, 1, t], np.mean(err[0:nens, 1, 1, t]), np.mean(err[0:nens, 2, 1, t])))
+        # plt.show()
 
         ##run forecast
         X = advance_time(X, dx, dt, smalldt, gen_ens, diss)
+
     ##save diagnose file
-    np.save(outdir+dirname+scenario+'/{}_s{}{}.npy'.format(filter_kind, ns, ns_obs), err)
+    np.save(outdir+dirname+scenario+'/{}_s{}_{}.npy'.format(filter_kind, ns, ns_obs), err)
 
