@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon
 from config import *
 
-cases = ('NoDA', 'EnSRF_s1', 'EnSRF_s2', 'EnSRF_s3', 'EnSRF_s4', 'EnSRF_s5', 'EnSRF_s6', 'EnSRF_s7')
+cases = ('NoDA', 'EnSRF_s1', 'EnSRF_s2', 'EnSRF_s3', 'EnSRF_s4', 'EnSRF_s5', 'EnSRF_s6')
 nens = 20
 Lsprd = (1, 3, 5)
 Lbias = 0
@@ -25,7 +25,7 @@ for j in range(3):
                 rmse[r1, 3] = np.mean(np.load('output/'+expname[j]+'/{:04d}/Lbias{}/Lsprd{}/{}/N{}/{}.npy'.format(r+1, Lbias, Lsprd[l], scenario[j], nens, cases[c]))[0:nens, 3])*9
                 r1 += 1
             for i in range(4):
-                x = l + c*0.1 + 0.1
+                x = l + c*0.12 + 0.1
                 q3, q1 = np.percentile(rmse[0:r1, i], [75, 25])
                 median = np.median(rmse[0:r1, i])
                 fc = [1, 1, 1]

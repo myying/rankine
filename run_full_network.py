@@ -71,7 +71,7 @@ for m in range(nens):
 vortex_ens = warp(vortex_ens, -u, -v)
 bkg_flow_ens = warp(bkg_flow_ens, -u*bkg_phase_err, -v*bkg_phase_err)
 for m in range(nens):
-    bkg_flow_ens[:, :, :, m] += gen_random_flow(ni, nj, nv, dx, 0.6*Vbg*(1-bkg_phase_err), -3)
+    bkg_flow_ens[:, :, :, m] += gen_random_flow(ni, nj, nv, dx, 0.3*Vbg*(2-bkg_phase_err), -3)
 Xb = bkg_flow_ens + vortex_ens
 
 if not os.path.isfile(outdir+dirname+scenario+'/NoDA.npy'):
@@ -79,7 +79,7 @@ if not os.path.isfile(outdir+dirname+scenario+'/NoDA.npy'):
     np.save(outdir+dirname+scenario+'/NoDA.npy', err)
 
 ##Run filter with MSA:
-for ns in (1, 2, 3, 4, 5, 6, 7):
+for ns in (1, 2, 3, 4, 5, 6):
     if not os.path.isfile(outdir+dirname+scenario+'/EnSRF_s{}.npy'.format(ns)):
         Xa = filter_update(Xb, Yo, Ymask, Yloc, 'EnSRF', obs_err_std*np.ones(ns),
                             get_local_cutoff(ns), get_local_dampen(ns), get_krange(ns), get_krange(1), run_alignment=True)
