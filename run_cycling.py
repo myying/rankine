@@ -106,7 +106,9 @@ for m in range(nens):
 X = bkg_flow_ens + vortex_ens
 
 if not os.path.isfile(outdir+dirname+scenario+'/{}_s{}_{}.npy'.format(filter_kind, ns, ns_obs)):
-    err = np.zeros((nens+1, 4, 2, nt))
+    ncycle = int(nt/obs_t_intv)
+    err = np.zeros((nens+1, 4, 2, nt+1))
+    err_fcst = np.zeros((nens+1, 4, ncycle, nt+1))
 
     ##start cycling
     for t in range(nt):
@@ -116,8 +118,17 @@ if not os.path.isfile(outdir+dirname+scenario+'/{}_s{}_{}.npy'.format(filter_kin
 
         ##run filter update
         if filter_kind=='EnSRF' and t>0 and t%obs_t_intv==0:
+            cycle = int(t/obs_t_intv)
+
+            if cycle>1 and cycle<ncycle:  ##additional forecasts til the end
+                Xf = X.copy()
+                for tf in range(t, nt):
+                    Xf = advance_time(Xf, dx, dt, smalldt, gen_ens, diss)
+                    err_fcst[:, :, cycle, tf+1] = diagnose(Xf, Xt[:, :, :, tf+1])
+
             X = filter_update(X, Yo[:, t], Ymask[:, t], Yloc[:, :, t], 'EnSRF', obs_err_std*np.ones(ns),
                               get_local_cutoff(ns), get_local_dampen(ns), get_krange(ns), get_krange(ns_obs), run_alignment=True)
+
         ##diagnose posterior
         err[:, :, 1, t] = diagnose(X, Xt[:, :, :, t])
 
@@ -136,7 +147,10 @@ if not os.path.isfile(outdir+dirname+scenario+'/{}_s{}_{}.npy'.format(filter_kin
 
         ##run forecast
         X = advance_time(X, dx, dt, smalldt, gen_ens, diss)
+        if t==nt-1:
+            err[:, :, 0, t+1] = diagnose(X, Xt[:, :, :, t+1])
 
     ##save diagnose file
     np.save(outdir+dirname+scenario+'/{}_s{}_{}.npy'.format(filter_kind, ns, ns_obs), err)
+    np.save(outdir+dirname+scenario+'/{}_s{}_{}_fcst.npy'.format(filter_kind, ns, ns_obs), err_fcst)
 

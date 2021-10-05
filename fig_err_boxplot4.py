@@ -18,10 +18,23 @@ for j in range(3):
             rmse = np.zeros((nreal[j], 4))
             r1 = 0
             for r in range(nreal[j]):
-                rmse[r1, 0] = np.mean(np.load('output/'+expname[j]+'/{:04d}/{}/{}.npy'.format(r+1, scenario[j], cases[c]))[-1, 0, l, ::3])
-                rmse[r1, 1] = np.mean(np.load('output/'+expname[j]+'/{:04d}/{}/{}.npy'.format(r+1, scenario[j], cases[c]))[0:nens[c], 1, l, ::3])*9
-                rmse[r1, 2] = np.mean(np.load('output/'+expname[j]+'/{:04d}/{}/{}.npy'.format(r+1, scenario[j], cases[c]))[0:nens[c], 2, l, ::3])
-                rmse[r1, 3] = np.mean(np.load('output/'+expname[j]+'/{:04d}/{}/{}.npy'.format(r+1, scenario[j], cases[c]))[0:nens[c], 3, l, ::3])*9
+                if l==0:  ##analysis errors
+                    rmse[r1, 0] = np.mean(np.load('output/'+expname[j]+'/{:04d}/{}/{}.npy'.format(r+1, scenario[j], cases[c]))[-1, 0, 1, 3:10:3])
+                    rmse[r1, 1] = np.mean(np.load('output/'+expname[j]+'/{:04d}/{}/{}.npy'.format(r+1, scenario[j], cases[c]))[0:nens[c], 1, 1, 3:10:3])*9
+                    rmse[r1, 2] = np.mean(np.load('output/'+expname[j]+'/{:04d}/{}/{}.npy'.format(r+1, scenario[j], cases[c]))[0:nens[c], 2, 1, 3:10:3])
+                    rmse[r1, 3] = np.mean(np.load('output/'+expname[j]+'/{:04d}/{}/{}.npy'.format(r+1, scenario[j], cases[c]))[0:nens[c], 3, 1, 3:10:3])*9
+                if l==1:  ##forecast errors at end of period
+                    rmse[r1, 0] = np.load('output/'+expname[j]+'/{:04d}/{}/{}.npy'.format(r+1, scenario[j], cases[c]))[-1, 0, 0, -1]
+                    rmse[r1, 1] = np.mean(np.load('output/'+expname[j]+'/{:04d}/{}/{}.npy'.format(r+1, scenario[j], cases[c]))[0:nens[c], 1, 0, -1])*9
+                    rmse[r1, 2] = np.mean(np.load('output/'+expname[j]+'/{:04d}/{}/{}.npy'.format(r+1, scenario[j], cases[c]))[0:nens[c], 2, 0, -1])
+                    rmse[r1, 3] = np.mean(np.load('output/'+expname[j]+'/{:04d}/{}/{}.npy'.format(r+1, scenario[j], cases[c]))[0:nens[c], 3, 0, -1])*9
+                    if c>0:
+                        for cycle in (1, 2):
+                            rmse[r1, 0] += np.load('output/'+expname[j]+'/{:04d}/{}/{}_fcst.npy'.format(r+1, scenario[j], cases[c]))[-1, 0, cycle, -1]
+                            rmse[r1, 1] += np.mean(np.load('output/'+expname[j]+'/{:04d}/{}/{}_fcst.npy'.format(r+1, scenario[j], cases[c]))[0:nens[c], 1, cycle, -1])*9
+                            rmse[r1, 2] += np.mean(np.load('output/'+expname[j]+'/{:04d}/{}/{}_fcst.npy'.format(r+1, scenario[j], cases[c]))[0:nens[c], 2, cycle, -1])
+                            rmse[r1, 3] += np.mean(np.load('output/'+expname[j]+'/{:04d}/{}/{}_fcst.npy'.format(r+1, scenario[j], cases[c]))[0:nens[c], 3, cycle, -1])*9
+                        rmse[r1, :] /= 3
                 r1 += 1
             for i in range(4):
                 x = l + c*0.1 + 0.1
@@ -36,7 +49,7 @@ for j in range(3):
                     fc = [.8, .4, .4]
                 ax[i, j].add_patch(Polygon([(x-0.04,q1), (x-0.04,q3), (x+0.04,q3), (x+0.04,q1)], facecolor=fc, ec='black'))
                 ax[i, j].plot(x, median, marker='.', color='black')
-ymax = (3.5, 60, 10, 10)
+ymax = (6.5, 70, 18, 10)
 for j in range(3):
     for i in range(4):
         ax[i, j].grid()
