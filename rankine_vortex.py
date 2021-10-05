@@ -185,7 +185,7 @@ def vortex_size(X):
                 wind_rad[r] += wind[int(center[0]+i)%ni, int(center[1]+j)%nj]
                 count_rad[r] += 1
     wind_rad = wind_rad/count_rad
-    if np.max(wind_rad)<wind_min:
+    if np.max(wind_rad)<wind_min or np.where(wind_rad>=wind_min)[0].size==0:
         size = -1
     else:
         i1 = np.where(wind_rad>=wind_min)[0][-1] ###last point with wind > 35knot
