@@ -85,7 +85,7 @@ for c in range(3):
         ax.plot([-50, 50], [Yo[i], Yo[i]], 'r', linewidth=2, zorder=-1)
         ax.scatter(Yout[c, 0, :], Y[c, 0, i, :], s=10, marker='o', color=[.4, .8, .2], edgecolor=[.3, .7, .3], zorder=0)
         ax.scatter(Yout[c, niter[c], :], Y[c, niter[c], i, :], s=20, marker='^', color=[.2, .4, .9], edgecolor=[.3, .3, .7], zorder=0)
-        for m in range(0, nens, 10):
+        for m in range(0, nens, 40):
             ax.plot(Yout[c, 0:niter[c]+1, m], Y[c, 0:niter[c]+1, i, m], color='black', linewidth=0.7, zorder=1)
         ax.set_xlim(-10, 40)
         if i == 0:
