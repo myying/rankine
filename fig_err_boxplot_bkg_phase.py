@@ -32,7 +32,7 @@ for j in range(3):
                 if c==0:
                     fc = [.7, .7, .7]
                 if c in (2, 3, 4, 5, 6, 7):
-                    fc = [.9, .8, .6]
+                    fc = [0, .7, .85]
                 ax[i, j].add_patch(Polygon([(x-0.04,q1), (x-0.04,q3), (x+0.04,q3), (x+0.04,q1)], facecolor=fc, ec='black'))
                 ax[i, j].plot(x, median, marker='.', color='black')
 ymax = (1.8, 45, 8, 10)

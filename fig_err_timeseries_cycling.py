@@ -6,7 +6,7 @@ from config import *
 
 cases = ('NoDA_s1_1', 'EnSRF_s1_1', 'EnSRF_s3_1', 'EnSRF_s3_3')
 casename = ('NoDA', 'EnSRF', 'EnSRF_MSA_3', 'EnSRF_MSAO_3')
-colors = ([.7, .7, .7], [0, 0, 0], [.9, .8, .6], [.8, .4, .4])
+colors = ([.7, .7, .7], [0, 0, 0], [0, .7, .85], [.8, .4, .4])
 linewidths = (3, 3, 2, 2)
 nens = (30, 30, 25, 25)
 expname = ('cycling/perfect_model/type2', 'cycling/perfect_model/type2', 'cycling/imperfect_model/type2')

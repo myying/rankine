@@ -32,7 +32,7 @@ for j in range(2):
                 if c==0:
                     fc = [.7, .7, .7]
                 if c in (2, 4, 6):
-                    fc = [.9, .8, .6]
+                    fc = [0, .7, .85]
                 if c in (3, 5, 7):
                     fc = [.8, .4, .4]
                 ax[i, j].add_patch(Polygon([(x-0.04,q1), (x-0.04,q3), (x+0.04,q3), (x+0.04,q1)], facecolor=fc, ec='black'))
