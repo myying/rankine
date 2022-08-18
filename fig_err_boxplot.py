@@ -5,7 +5,7 @@ from matplotlib.patches import Polygon
 from config import *
 
 cases = ('NoDA', 'EnSRF_s1', 'EnSRF_s2', 'EnSRF_s3', 'EnSRF_s4', 'EnSRF_s5', 'EnSRF_s6', 'EnSRF_s7', 'PF')
-nens = (20, 20, 20, 20, 20, 20, 20, 20, 20)
+nens = (20, 20, 20, 20, 20, 20, 20, 20, 500)
 Lsprd = (1, 2, 3, 4, 5)
 Lbias = 0
 expname = ('single_wind_obs', 'position_obs')
@@ -30,12 +30,12 @@ for j in range(2):
                 if c==0:  ##NoDA
                     fc = [.7, .7, .7]
                 if c==len(cases)-1:  ##PF
-                    fc = [.1, .1, .1]
+                    fc = [.5, .5, .5]
                 if c==1:  ##EnSRF
-                    fc = [1, 1, 1]
+                    fc = [.5, .9, .5]
                 if c>1 and c<len(cases)-1:  ##EnSRF_MSA Ns>1
                     fc = [0, .7, .85]
-                ax[i, j].add_patch(Polygon([(x-0.04,q1), (x-0.04,q3), (x+0.04,q3), (x+0.04,q1)], facecolor=fc, ec='black'))
+                ax[i, j].add_patch(Polygon([(x-0.04,q1), (x-0.04,q3), (x+0.04,q3), (x+0.04,q1)], facecolor=fc, ec=None))
                 ax[i, j].plot(x, median, marker='.', color='black')
 ymax = (1.8, 45, 6, 18)
 for j in range(2):
