@@ -107,8 +107,8 @@ X = bkg_flow_ens + vortex_ens
 
 if not os.path.isfile(outdir+dirname+scenario+'/{}_s{}_{}.npy'.format(filter_kind, ns, ns_obs)):
     ncycle = int(nt/obs_t_intv)
-    err = np.zeros((nens+1, 4, 2, nt+1))
-    err_fcst = np.zeros((nens+1, 4, ncycle, nt+1))
+    err = np.zeros((nens+2, 4, 2, nt+1))
+    err_fcst = np.zeros((nens+2, 4, ncycle, nt+1))
 
     ##start cycling
     for t in range(nt):

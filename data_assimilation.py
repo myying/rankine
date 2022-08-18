@@ -282,20 +282,34 @@ def laplacian(f):
 ###some performance metrics
 def diagnose(X, Xt):
     ni, nj, nv, nens = X.shape
-    out = np.zeros((nens+1, 4))
+    out = np.zeros((nens+2, 4))  ##1-nens: err for each member, nens+1: err for ens mean, nens+2: ens spread
     true_center = vortex_center(Xt)
     true_intensity = vortex_intensity(Xt)
     true_size = vortex_size(Xt)
+    mem_center = np.zeros((2, nens))
+    mem_intensity = np.zeros(nens)
+    mem_size = np.zeros(nens)
+    for m in range(nens):
+        mem_center[:, m] = vortex_center(X[:, :, :, m])
+        mem_intensity[m] = vortex_intensity(X[:, :, :, m])
+        mem_size[m] = vortex_size(X[:, :, :, m])
+
     for m in range(nens):
         out[m, 0] = np.sqrt(np.mean((X[:, :, :, m] - Xt)**2, axis=(0,1,2))) ###domain-averaged state (u,v) outor
-        out[m, 1] = np.sqrt(np.mean((vortex_center(X[:, :, :, m]) - true_center)**2))
-        out[m, 2] = np.sqrt(np.mean((vortex_intensity(X[:, :, :, m]) - true_intensity)**2))
-        out[m, 3] = np.sqrt(np.mean((vortex_size(X[:, :, :, m]) - true_size)**2))
+        out[m, 1] = np.sqrt(np.mean((mem_center[:, m] - true_center)**2))
+        out[m, 2] = np.sqrt(np.mean((mem_intensity[m] - true_intensity)**2))
+        out[m, 3] = np.sqrt(np.mean((mem_size[m] - true_size)**2))
+
     Xmean = np.mean(X, axis=3)
     out[nens, 0] = np.sqrt(np.mean((Xmean - Xt)**2, axis=(0,1,2)))
     out[nens, 1] = np.sqrt(np.mean((vortex_center(Xmean) - true_center)**2))
     out[nens, 2] = np.sqrt(np.mean((vortex_intensity(Xmean) - true_intensity)**2))
     out[nens, 3] = np.sqrt(np.mean((vortex_size(Xmean) - true_size)**2))
+
+    out[nens+1, 0] = ens_sprd(X)
+    out[nens+1, 1] = np.sqrt(np.mean(np.std(mem_center, axis=1)**2))
+    out[nens+1, 2] = np.sqrt(np.mean(np.std(mem_intensity)**2))
+    out[nens+1, 3] = np.sqrt(np.mean(np.std(mem_size)**2))
     return out
 
 def mean_rmse(Xens, Xt):
