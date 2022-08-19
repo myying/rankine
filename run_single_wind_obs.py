@@ -35,8 +35,8 @@ else:
     np.save(outdir+dirname+'/Yloc.npy', Yloc)
 
 for loc_sprd in (1, 2, 3, 4, 5):
-    for loc_bias in (0, 5):
-        for nens in (20,):
+    for loc_bias in (0,):
+        for nens in (20,): #500 for PF
             scenario = "/Lbias{}/Lsprd{}/N{}".format(loc_bias, loc_sprd, nens)
             if not os.path.exists(outdir+dirname+scenario):
                 os.makedirs(outdir+dirname+scenario)

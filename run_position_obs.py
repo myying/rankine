@@ -31,7 +31,7 @@ else:
 
 for loc_sprd in (1, 2, 3, 4, 5):
     loc_bias = 0
-    nens = 20
+    nens = 20  ##500 for PF
     scenario = "/Lbias{}/Lsprd{}/N{}".format(loc_bias, loc_sprd, nens)
     if not os.path.exists(outdir+dirname+scenario):
         os.makedirs(outdir+dirname+scenario)
