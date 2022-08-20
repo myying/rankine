@@ -21,6 +21,8 @@ Rmw = 5       ## radius of maximum wind (vortex size)
 ##ensemble parameters
 nens = 20    ##ensemble size
 loc_sprd = 10  ##position spread in prior ensemble
+vmax_sprd = 0
+size_sprd = 0
 gen_ens = gen*np.ones(nens)
 
 ##obs network parameters

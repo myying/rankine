@@ -14,11 +14,20 @@ filter_kind = sys.argv[2]  ##NoDA or EnSRF
 ns = int(sys.argv[3])    ##number of scales
 ns_obs = int(sys.argv[4])
 
+model_kind = sys.argv[5] #'perfect_model' #or imperfect_model
+bkg_phase_err = float(sys.argv[6]) #0.0  ##or 1.0
+struct_perturb = int(sys.argv[7]) ##0 no perturb; 1 perturb vortex structure
+
 nens = get_equal_cost_nens(30, ns)
 loc_sprd = 3
+if struct_perturb==1:
+    size_sprd = 0.5
+    vmax_sprd = 2
+else:
+    size_sprd = 0
+    vmax_sprd = 0
+
 network_type = 2
-bkg_phase_err = 0.0  ##or 1.0
-model_kind = 'perfect_model' #or imperfect_model
 
 np.random.seed(realize)
 dirname = 'cycling/{}/type{}/{:04d}'.format(model_kind, network_type, realize)
@@ -84,7 +93,7 @@ else:
     np.save(outdir+dirname+'/Yloc.npy', Yloc)
     np.save(outdir+dirname+'/Ymask.npy', Ymask)
 
-scenario = "/Lsprd{}/phase{}".format(loc_sprd, bkg_phase_err)
+scenario = "/Lsprd{}/struct_perturb{}/phase{}".format(loc_sprd, struct_perturb, bkg_phase_err)
 if not os.path.exists(outdir+dirname+scenario):
     os.makedirs(outdir+dirname+scenario)
 
@@ -97,7 +106,9 @@ v = np.zeros((ni, nj, nv, nens))
 for m in range(nens):
     u[:, :, :, m] = np.random.normal(0, loc_sprd)
     v[:, :, :, m] = np.random.normal(0, loc_sprd)
-    vortex_ens[:, :, :, m] = vortex
+    Vmax_pert = np.maximum(Vmax + np.random.normal(0, vmax_sprd), 20)
+    Rmw_pert = np.maximum(Rmw + np.random.normal(0, size_sprd), 3)
+    vortex_ens[:, :, :, m] = gen_vortex(ni, nj, nv, Vmax_pert, Rmw_pert)
     bkg_flow_ens[:, :, :, m] = bkg_flow
 vortex_ens = warp(vortex_ens, -u, -v)
 bkg_flow_ens = warp(bkg_flow_ens, -u*bkg_phase_err, -v*bkg_phase_err)
