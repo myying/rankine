@@ -18,24 +18,24 @@ for j in range(len(scenario)):
             r1 = 0
             for r in range(nreal[j]):
                 if l==0:  ##analysis errors
-                    rmse[r1, 0] = np.mean(np.load('output/'+expname[j]+'/{:04d}/{}/{}.npy'.format(r+1, scenario[j], cases[c]))[-1, 0, 1, 3:10:3])
+                    rmse[r1, 0] = np.mean(np.load('output/'+expname[j]+'/{:04d}/{}/{}.npy'.format(r+1, scenario[j], cases[c]))[nens[c], 0, 1, 3:10:3])
                     rmse[r1, 1] = np.mean(np.load('output/'+expname[j]+'/{:04d}/{}/{}.npy'.format(r+1, scenario[j], cases[c]))[0:nens[c], 1, 1, 3:10:3])*9
                     rmse[r1, 2] = np.mean(np.load('output/'+expname[j]+'/{:04d}/{}/{}.npy'.format(r+1, scenario[j], cases[c]))[0:nens[c], 2, 1, 3:10:3])
                     rmse[r1, 3] = np.mean(np.load('output/'+expname[j]+'/{:04d}/{}/{}.npy'.format(r+1, scenario[j], cases[c]))[0:nens[c], 3, 1, 3:10:3])*9
                 if l==1:  ##forecast errors at end of period
-                    rmse[r1, 0] = np.load('output/'+expname[j]+'/{:04d}/{}/{}.npy'.format(r+1, scenario[j], cases[c]))[-1, 0, 0, -1]
+                    rmse[r1, 0] = np.load('output/'+expname[j]+'/{:04d}/{}/{}.npy'.format(r+1, scenario[j], cases[c]))[nens[c], 0, 0, -1]
                     rmse[r1, 1] = np.mean(np.load('output/'+expname[j]+'/{:04d}/{}/{}.npy'.format(r+1, scenario[j], cases[c]))[0:nens[c], 1, 0, -1])*9
                     rmse[r1, 2] = np.mean(np.load('output/'+expname[j]+'/{:04d}/{}/{}.npy'.format(r+1, scenario[j], cases[c]))[0:nens[c], 2, 0, -1])
                     rmse[r1, 3] = np.mean(np.load('output/'+expname[j]+'/{:04d}/{}/{}.npy'.format(r+1, scenario[j], cases[c]))[0:nens[c], 3, 0, -1])*9
                     if c>0:
                         for cycle in (1, 2):
-                            rmse[r1, 0] += np.load('output/'+expname[j]+'/{:04d}/{}/{}_fcst.npy'.format(r+1, scenario[j], cases[c]))[-1, 0, cycle, -1]
+                            rmse[r1, 0] += np.load('output/'+expname[j]+'/{:04d}/{}/{}_fcst.npy'.format(r+1, scenario[j], cases[c]))[nens[c], 0, cycle, -1]
                             rmse[r1, 1] += np.mean(np.load('output/'+expname[j]+'/{:04d}/{}/{}_fcst.npy'.format(r+1, scenario[j], cases[c]))[0:nens[c], 1, cycle, -1])*9
                             rmse[r1, 2] += np.mean(np.load('output/'+expname[j]+'/{:04d}/{}/{}_fcst.npy'.format(r+1, scenario[j], cases[c]))[0:nens[c], 2, cycle, -1])
                             rmse[r1, 3] += np.mean(np.load('output/'+expname[j]+'/{:04d}/{}/{}_fcst.npy'.format(r+1, scenario[j], cases[c]))[0:nens[c], 3, cycle, -1])*9
                         rmse[r1, :] /= 3
                 r1 += 1
-            #print(expname[j],scenario[j],np.where(np.isnan(rmse[:,0])))  ##check for nan and rerun realization then come back
+            # print(expname[j],scenario[j],np.where(np.isnan(rmse[:,:])))  ##check for nan and rerun realization then come back
 
             for i in range(4):
                 x = l + c*0.1 + 0.1
