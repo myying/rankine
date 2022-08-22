@@ -9,7 +9,7 @@ nens = (20, 20, 20, 20, 20, 20, 20, 20, 500)
 Lsprd = (1, 2, 3, 4, 5)
 Lbias = 0
 expname = ('single_wind_obs', 'position_obs')
-nreal = (100, 100)
+nreal = (1000, 1000)
 
 fig, ax = plt.subplots(4, 2, figsize=(12, 12))
 for j in range(2):
