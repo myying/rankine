@@ -11,9 +11,10 @@ from config import *
 realize = int(sys.argv[1])
 
 nens = 20 # ensemble size
-loc_bias = 0
 loc_sprd = int(sys.argv[2])
-bkg_phase_err = float(sys.argv[3])
+vmax_sprd = int(sys.argv[3])
+size_sprd = float(sys.argv[4])
+bkg_phase_err = float(sys.argv[5])
 
 network_type = 1
 nobs, obs_range = gen_network(network_type)
@@ -54,7 +55,7 @@ else:
     np.save(outdir+dirname+'/Yloc.npy', Yloc)
     np.save(outdir+dirname+'/Ymask.npy', Ymask)
 
-scenario = "/Lbias{}/Lsprd{}/phase{}/N{}".format(loc_bias, loc_sprd, bkg_phase_err, nens)
+scenario = "/Lsprd{}/Vsprd{}/Ssprd{}/phase{}/N{}".format(loc_sprd, vmax_sprd, size_sprd, bkg_phase_err, nens)
 if not os.path.exists(outdir+dirname+scenario):
     os.makedirs(outdir+dirname+scenario)
 
@@ -66,7 +67,9 @@ v = np.zeros((ni, nj, nv, nens))
 for m in range(nens):
     u[:, :, :, m] = np.random.normal(0, loc_sprd)
     v[:, :, :, m] = np.random.normal(0, loc_sprd)
-    vortex_ens[:, :, :, m] = vortex
+    Vmax_pert = Vmax + np.random.normal(0, vmax_sprd)
+    Rmw_pert = np.maximum(Rmw + np.random.normal(0, size_sprd), 3)
+    vortex_ens[:, :, :, m] = gen_vortex(ni, nj, nv, Vmax_pert, Rmw_pert)
     bkg_flow_ens[:, :, :, m] = bkg_flow
 vortex_ens = warp(vortex_ens, -u, -v)
 bkg_flow_ens = warp(bkg_flow_ens, -u*bkg_phase_err, -v*bkg_phase_err)

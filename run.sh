@@ -1,4 +1,5 @@
 #!/bin/bash
+###Submit the python jobs in HPC, here srun is the particular command that works on my machine
 #SBATCH --account=nn2993k
 #SBATCH --job-name=msa_test
 #SBATCH --time=0-01:00:00
@@ -45,21 +46,25 @@ ppn=$SLURM_NTASKS_PER_NODE
 #done
 
 ###full network assimilation exps
-#t=0
-#for loc_sprd in 1 3 5; do
-#    for phase_amp in 1.0 0.5 0.0; do
-#        for real in `seq 1 100`; do
-#            offset_node=`echo $t / $ppn |bc`
-#            echo $real $loc_sprd $phase_amp
-#            srun -N 1 -n 1 -r $offset_node python run_full_network.py $real $loc_sprd $phase_amp &
-#            t=$((t+1))
-#            if [ $t == $nt ]; then
-#                t=0
-#                wait
-#            fi
-#        done
-#    done
-#done
+t=0
+for loc_sprd in 1 3 5; do
+    for vmax_sprd in 0; do
+        for size_sprd in 0.0; do
+            for phase_amp in 1.0 0.5 0.0; do
+                for real in `seq 1 100`; do
+                    offset_node=`echo $t / $ppn |bc`
+                    echo $real $loc_sprd $phase_amp
+                    srun -N 1 -n 1 -r $offset_node python run_full_network.py $real $loc_sprd $vmax_sprd $size_sprd $phase_amp &
+                    t=$((t+1))
+                    if [ $t == $nt ]; then
+                        t=0
+                        wait
+                    fi
+                done
+            done
+        done
+    done
+done
 
 ###cycling DA exps
 t=0
