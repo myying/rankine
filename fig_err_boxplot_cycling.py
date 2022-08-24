@@ -10,7 +10,7 @@ expname = ('cycling/perfect_model/type2', 'cycling/perfect_model/type2', 'cyclin
 scenario = ('Lsprd3/struct_perturb0/phase1.0', 'Lsprd3/struct_perturb0/phase0.0', 'Lsprd3/struct_perturb1/phase1.0', 'Lsprd3/struct_perturb0/phase1.0')
 nreal = (100, 100, 100, 100)
 
-fig, ax = plt.subplots(4, len(scenario), figsize=(15, 12))
+fig, ax = plt.subplots(4, len(scenario), figsize=(12, 12))
 for j in range(len(scenario)):
     for l in (0, 1):  ##0=prior, 1=posterior (forecast)
         for c in range(len(cases)):
@@ -41,14 +41,19 @@ for j in range(len(scenario)):
                 x = l + c*0.1 + 0.1
                 q3, q1 = np.percentile(rmse[0:r1, i], [75, 25])
                 median = np.median(rmse[0:r1, i])
-                fc = [.3, .7, .3]
                 if c==0:
                     fc = [.7, .7, .7]
+                    ec = [0, 0, 0]
+                if c==1:
+                    fc = [1, 1, 1]
+                    ec = [0, 0, 0]
                 if c in (2, 4, 6):
-                    fc = [0, .7, .85]
+                    fc = [0, .7, .9]
+                    ec = None
                 if c in (3, 5, 7):
-                    fc = [.8, .4, .4]
-                ax[i, j].add_patch(Polygon([(x-0.04,q1), (x-0.04,q3), (x+0.04,q3), (x+0.04,q1)], facecolor=fc, ec=None))
+                    fc = [.8, .3, .3]
+                    ec = None
+                ax[i, j].add_patch(Polygon([(x-0.04,q1), (x-0.04,q3), (x+0.04,q3), (x+0.04,q1)], facecolor=fc, ec=ec))
                 ax[i, j].plot(x, median, marker='.', color='black')
 ymax = (6.5, 70, 18, 10)
 for j in range(len(scenario)):

@@ -12,7 +12,7 @@ Lbias = 0
 expname = 'single_wind_obs'
 nreal = 1000
 
-fig, ax = plt.subplots(5, 1, figsize=(8, 9))
+fig, ax = plt.subplots(5, 1, figsize=(6, 9))
 for l in range(len(Lsprd)):
     for c in range(len(cases)):
         rmse = np.zeros((nreal, 5))
@@ -30,13 +30,17 @@ for l in range(len(Lsprd)):
             median = np.median(rmse[0:rt[i], i])
             if c==0:  ##NoDA
                 fc = [.7, .7, .7]
+                ec = [0, 0, 0]
             if c==len(cases)-1:  ##PF
-                fc = [.1, .1, .1]
+                fc = [0, .5, .3]
+                ec = [0, 0, 0]
             if c==1:  ##EnSRF
                 fc = [1, 1, 1]
+                ec = [0, 0, 0]
             if c>1 and c<len(cases)-1:  ##EnSRF_MSA Ns>1
                 fc = [0, .7, .85]
-            ax[4-i].add_patch(Polygon([(x-0.04,q1), (x-0.04,q3), (x+0.04,q3), (x+0.04,q1)], facecolor=fc, ec='black'))
+                ec = None
+            ax[4-i].add_patch(Polygon([(x-0.04,q1), (x-0.04,q3), (x+0.04,q3), (x+0.04,q1)], facecolor=fc, ec=ec))
             ax[4-i].plot(x, median, marker='.', color='black')
 print(rt)
 for i in range(5):
