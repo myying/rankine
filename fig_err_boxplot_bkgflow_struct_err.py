@@ -13,7 +13,7 @@ Rsprd = ((0.0, 0.0, 0.0), (0.0, 0.0, 0.0), (0.0, 0.0), (0.5, 1.0))
 phase = (1.0, 0.0, 1.0, 1.0)
 nreal = 100
 
-fig, ax = plt.subplots(4, len(expname), figsize=(12, 12), gridspec_kw={'width_ratios': [3, 3, 2, 2]})
+fig, ax = plt.subplots(4, len(expname), figsize=(14, 12), gridspec_kw={'width_ratios': [3, 3, 2, 2]})
 for j in range(len(expname)):
     for l in range(len(Lsprd[j])):
         for c in range(len(cases)):

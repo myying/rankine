@@ -11,12 +11,12 @@ from config import *
 realize = int(sys.argv[1])
 
 nens = 20 # ensemble size
-loc_sprd = int(sys.argv[2])
-vmax_sprd = int(sys.argv[3])
-rmw_sprd = float(sys.argv[4])
-bkg_phase_err = float(sys.argv[5])
+loc_sprd = int(sys.argv[2])  ##position spread
+vmax_sprd = int(sys.argv[3]) ##structure error, vmax/rmw spread
+rmw_sprd = float(sys.argv[4]) 
+bkg_phase_err = float(sys.argv[5]) #1.0 in phase or 0.0 out of phase
 
-network_type = 1
+network_type = int(sys.argv[6]) #1 global or 2 targeted
 nobs, obs_range = gen_network(network_type)
 
 np.random.seed(realize)
@@ -90,9 +90,9 @@ for ns in (1, 2, 3, 4, 5, 6):
         np.save(outdir+dirname+scenario+'/EnSRF_s{}.npy'.format(ns), err)
 
 ##add mso cases, krange_obs = get_krange(ns)
-# for ns in (2, 3, 4):
-#     if not os.path.isfile(outdir+dirname+scenario+'/EnSRF_s{}_mso.npy'.format(ns)):
-#         Xa = filter_update(Xb, Yo, Ymask, Yloc, 'EnSRF', obs_err_std*np.ones(ns),
-#                             get_local_cutoff(ns), get_local_dampen(ns), get_krange(ns), get_krange(ns), run_alignment=True)
-#         err = diagnose(Xa, Xt)
-#         np.save(outdir+dirname+scenario+'/EnSRF_s{}_mso.npy'.format(ns), err)
+for ns in (2, 3, 4):
+    if not os.path.isfile(outdir+dirname+scenario+'/EnSRF_s{}_mso.npy'.format(ns)):
+        Xa = filter_update(Xb, Yo, Ymask, Yloc, 'EnSRF', obs_err_std*np.ones(ns),
+                            get_local_cutoff(ns), get_local_dampen(ns), get_krange(ns), get_krange(ns), run_alignment=True)
+        err = diagnose(Xa, Xt)
+        np.save(outdir+dirname+scenario+'/EnSRF_s{}_mso.npy'.format(ns), err)
