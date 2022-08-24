@@ -13,14 +13,13 @@ filter_kind = sys.argv[1]
 ns = int(sys.argv[2])
 ns_obs = int(sys.argv[3])
 
-loc_sprd = 5
-vmax_sprd = 0
-size_sprd = 1.0
+loc_sprd = 0.6*Rmw
+vmax_sprd = 0.3*Vmax
+size_sprd = 0.1*Rmw
 bkg_phase_err = 1.0
 
 nens = 20
-# nobs, obs_range = gen_network(1)
-obs_range
+nobs, obs_range = gen_network(2)
 krange = get_krange(ns)
 krange_obs = get_krange(ns_obs)
 
@@ -40,13 +39,7 @@ Yloc = np.zeros((3, nobs*nv))
 Xo = Xt.copy()
 for k in range(nv):
     Xo[:, :, k] += obs_err_std * random_field(ni, obs_err_power_law)
-# Yloc = gen_obs_loc(ni, nj, nv, nobs)
-Yloc2 = np.zeros((2, nobs))
-Yloc2[0, :] = np.reshape(ii[::3, ::3].astype(float), nobs)
-Yloc2[1, :] = np.reshape(jj[::3, ::3].astype(float), nobs)
-for k in range(nv):
-    Yloc[0:2, k::nv] = Yloc2
-    Yloc[2, k::nv] = k
+Yloc = gen_obs_loc(ni, nj, nv, nobs)
 Yo = obs_interp2d(Xo, Yloc)
 Ydist = get_dist(ni, nj, Yloc[0, :], Yloc[1, :], 0.5*ni, 0.5*nj)
 Ymask[np.where(Ydist<=obs_range)] = 1
