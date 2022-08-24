@@ -21,10 +21,10 @@ struct_perturb = int(sys.argv[7]) ##0 no perturb; 1 perturb vortex structure
 nens = get_equal_cost_nens(30, ns)
 loc_sprd = 3
 if struct_perturb==1:
-    size_sprd = 0.5
-    vmax_sprd = 2
+    rmw_sprd = 0.5  ##0.1Rmw
+    vmax_sprd = 2   ##0.06Vmax
 else:
-    size_sprd = 0
+    rmw_sprd = 0
     vmax_sprd = 0
 
 network_type = 2
@@ -107,7 +107,7 @@ for m in range(nens):
     u[:, :, :, m] = np.random.normal(0, loc_sprd)
     v[:, :, :, m] = np.random.normal(0, loc_sprd)
     Vmax_pert = np.maximum(Vmax + np.random.normal(0, vmax_sprd), 20)
-    Rmw_pert = np.maximum(Rmw + np.random.normal(0, size_sprd), 3)
+    Rmw_pert = np.maximum(Rmw + np.random.normal(0, rmw_sprd), 3)
     vortex_ens[:, :, :, m] = gen_vortex(ni, nj, nv, Vmax_pert, Rmw_pert)
     bkg_flow_ens[:, :, :, m] = bkg_flow
 vortex_ens = warp(vortex_ens, -u, -v)

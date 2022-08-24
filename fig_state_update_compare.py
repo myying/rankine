@@ -42,11 +42,11 @@ nens = 200
 loc_sprd = 0.6*Rmw
 loc_bias = 0.0*Rmw
 vmax_sprd = 0.0*Vmax
-size_sprd = 0.0*Rmw
+rmw_sprd = 0.0*Rmw
 Xb = np.zeros((ni, nj, nv, nens))
 for m in range(nens):
     Vmax_pert = Vmax + np.random.normal(0, vmax_sprd)
-    Rmw_pert = np.maximum(Rmw + np.random.normal(0, size_sprd), 3)
+    Rmw_pert = np.maximum(Rmw + np.random.normal(0, rmw_sprd), 3)
     Xb[:, :, :, m] = gen_vortex(ni, nj, nv, Vmax_pert, Rmw_pert, loc_sprd, loc_bias)
 
 filter_kind = ('NoDA', 'EnSRF', 'EnSRF', 'EnSRF', 'EnSRF', 'PF')

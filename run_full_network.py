@@ -13,7 +13,7 @@ realize = int(sys.argv[1])
 nens = 20 # ensemble size
 loc_sprd = int(sys.argv[2])
 vmax_sprd = int(sys.argv[3])
-size_sprd = float(sys.argv[4])
+rmw_sprd = float(sys.argv[4])
 bkg_phase_err = float(sys.argv[5])
 
 network_type = 1
@@ -55,7 +55,7 @@ else:
     np.save(outdir+dirname+'/Yloc.npy', Yloc)
     np.save(outdir+dirname+'/Ymask.npy', Ymask)
 
-scenario = "/Lsprd{}/Vsprd{}/Ssprd{}/phase{}/N{}".format(loc_sprd, vmax_sprd, size_sprd, bkg_phase_err, nens)
+scenario = "/Lsprd{}/Vsprd{}/Rsprd{}/phase{}/N{}".format(loc_sprd, vmax_sprd, rmw_sprd, bkg_phase_err, nens)
 if not os.path.exists(outdir+dirname+scenario):
     os.makedirs(outdir+dirname+scenario)
 
@@ -68,7 +68,7 @@ for m in range(nens):
     u[:, :, :, m] = np.random.normal(0, loc_sprd)
     v[:, :, :, m] = np.random.normal(0, loc_sprd)
     Vmax_pert = Vmax + np.random.normal(0, vmax_sprd)
-    Rmw_pert = np.maximum(Rmw + np.random.normal(0, size_sprd), 3)
+    Rmw_pert = np.maximum(Rmw + np.random.normal(0, rmw_sprd), 3)
     vortex_ens[:, :, :, m] = gen_vortex(ni, nj, nv, Vmax_pert, Rmw_pert)
     bkg_flow_ens[:, :, :, m] = bkg_flow
 vortex_ens = warp(vortex_ens, -u, -v)
@@ -90,9 +90,9 @@ for ns in (1, 2, 3, 4, 5, 6):
         np.save(outdir+dirname+scenario+'/EnSRF_s{}.npy'.format(ns), err)
 
 ##add mso cases, krange_obs = get_krange(ns)
-for ns in (2, 3, 4):
-    if not os.path.isfile(outdir+dirname+scenario+'/EnSRF_s{}_mso.npy'.format(ns)):
-        Xa = filter_update(Xb, Yo, Ymask, Yloc, 'EnSRF', obs_err_std*np.ones(ns),
-                            get_local_cutoff(ns), get_local_dampen(ns), get_krange(ns), get_krange(ns), run_alignment=True)
-        err = diagnose(Xa, Xt)
-        np.save(outdir+dirname+scenario+'/EnSRF_s{}_mso.npy'.format(ns), err)
+# for ns in (2, 3, 4):
+#     if not os.path.isfile(outdir+dirname+scenario+'/EnSRF_s{}_mso.npy'.format(ns)):
+#         Xa = filter_update(Xb, Yo, Ymask, Yloc, 'EnSRF', obs_err_std*np.ones(ns),
+#                             get_local_cutoff(ns), get_local_dampen(ns), get_krange(ns), get_krange(ns), run_alignment=True)
+#         err = diagnose(Xa, Xt)
+#         np.save(outdir+dirname+scenario+'/EnSRF_s{}_mso.npy'.format(ns), err)

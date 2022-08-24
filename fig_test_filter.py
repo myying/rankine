@@ -15,7 +15,7 @@ ns_obs = int(sys.argv[3])
 
 loc_sprd = 0.6*Rmw
 vmax_sprd = 0.3*Vmax
-size_sprd = 0.1*Rmw
+rmw_sprd = 0.1*Rmw
 bkg_phase_err = 1.0
 
 nens = 20
@@ -54,7 +54,7 @@ for m in range(nens):
     u[:, :, :, m] = np.random.normal(0, loc_sprd)
     v[:, :, :, m] = np.random.normal(0, loc_sprd)
     Vmax_pert = np.maximum(Vmax + np.random.normal(0, vmax_sprd), 20)
-    Rmw_pert = np.maximum(Rmw + np.random.normal(0, size_sprd), 3)
+    Rmw_pert = np.maximum(Rmw + np.random.normal(0, rmw_sprd), 3)
     vortex_ens[:, :, :, m] = gen_vortex(ni, nj, nv, Vmax_pert, Rmw_pert)
     bkg_flow_ens[:, :, :, m] = bkg_flow
 vortex_ens = warp(vortex_ens, -u, -v)
