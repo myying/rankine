@@ -8,18 +8,19 @@ from data_assimilation import *
 from multiscale import *
 from config import *
 
-realize = 10 #int(sys.argv[1])
-ns = int(sys.argv[1])
-ns_obs = int(sys.argv[2])
+realize = 11 #int(sys.argv[1])
+filter_kind = sys.argv[1]
+ns = int(sys.argv[2])
+ns_obs = int(sys.argv[3])
 
 loc_sprd = 5
 vmax_sprd = 0
-size_sprd = 0.0
+size_sprd = 1.0
 bkg_phase_err = 1.0
 
 nens = 20
-nobs = 500
-obs_range = 100
+# nobs, obs_range = gen_network(1)
+obs_range
 krange = get_krange(ns)
 krange_obs = get_krange(ns_obs)
 
@@ -31,13 +32,21 @@ vortex = gen_vortex(ni, nj, nv, Vmax, Rmw)
 Xt = bkg_flow + vortex
 
 ##Observations
+ii, jj = np.mgrid[0:ni, 0:nj]
+nobs = ii[::3, ::3].size
 Yo = np.zeros((nobs*nv))
 Ymask = np.zeros((nobs*nv))
 Yloc = np.zeros((3, nobs*nv))
 Xo = Xt.copy()
 for k in range(nv):
     Xo[:, :, k] += obs_err_std * random_field(ni, obs_err_power_law)
-Yloc = gen_obs_loc(ni, nj, nv, nobs)
+# Yloc = gen_obs_loc(ni, nj, nv, nobs)
+Yloc2 = np.zeros((2, nobs))
+Yloc2[0, :] = np.reshape(ii[::3, ::3].astype(float), nobs)
+Yloc2[1, :] = np.reshape(jj[::3, ::3].astype(float), nobs)
+for k in range(nv):
+    Yloc[0:2, k::nv] = Yloc2
+    Yloc[2, k::nv] = k
 Yo = obs_interp2d(Xo, Yloc)
 Ydist = get_dist(ni, nj, Yloc[0, :], Yloc[1, :], 0.5*ni, 0.5*nj)
 Ymask[np.where(Ydist<=obs_range)] = 1
@@ -62,41 +71,58 @@ for m in range(nens):
 Xb = bkg_flow_ens + vortex_ens
 
 X = Xb.copy()
-X = filter_update(X, Yo, Ymask, Yloc, 'EnSRF', obs_err_std*np.ones(ns), get_local_cutoff(ns), get_local_dampen(ns), krange, krange_obs, run_alignment=True, update_scale=-1)
+X = filter_update(X, Yo, Ymask, Yloc, filter_kind, obs_err_std*np.ones(ns), get_local_cutoff(ns), get_local_dampen(ns), krange, krange_obs, run_alignment=True, update_scale=-1)
 err = diagnose(X, Xt)
+print('POSTERIOR')
 print('domain-avg err=', err[nens, 0])
 print('pos err=', np.mean(err[0:nens, 1]))
 print('intensity err=', np.mean(err[0:nens, 2]))
 print('size err=', np.mean(err[0:nens, 3]))
 
-m = 0
 ii, jj = np.mgrid[0:ni, 0:nj]
 plt.figure(figsize=(8,11))
+
+
 ax = plt.subplot(321)
-ax.contourf(ii, jj, Xt[:, :, 0], np.arange(-40, 40, 2), cmap='bwr')
-ax.set_title('truth')
+# ax.contourf(ii, jj, Xt[:, :, 0], np.arange(-40, 40, 2), cmap='bwr')
+wspd = np.sqrt(Xt[:, :, 0]**2+Xt[:, :, 1]**2)
+ax.contourf(ii, jj, wspd, np.arange(0, 40, 2), cmap='bwr')
+# ax.set_title('truth')
+ax.set_title('intensity={:.3f}, size={:.3f}'.format(vortex_intensity(Xt[:, :, :]), vortex_size(Xt[:, :, :])))
+
 ax = plt.subplot(322)
-plot_obs(ax, ni, nj, nv, Yo, Ymask, Yloc)
+plot_obs_wspd(ax, ni, nj, nv, Yo, Ymask, Yloc)
 ax.set_title('obs')
+
+
+m = 0
 ax = plt.subplot(323)
-ax.contourf(ii, jj, np.mean(Xb, axis=3)[:, :, 0], np.arange(-40, 40, 2), cmap='bwr')
-ax.set_title('prior mean')
-# ax.contourf(ii, jj, Xb[:, :, 0, m], np.arange(-30, 30, 2), cmap='bwr')
+# ax.contourf(ii, jj, np.mean(Xb, axis=3)[:, :, 0], np.arange(-40, 40, 2), cmap='bwr')
+# ax.set_title('prior mean')
+# ax.contourf(ii, jj, Xb[:, :, 0, m], np.arange(-40, 40, 2), cmap='bwr')
+wspd = np.sqrt(Xb[:, :, 0, m]**2+Xb[:, :, 1, m]**2)
+ax.contourf(ii, jj, wspd, np.arange(0, 40, 2), cmap='bwr')
+ax.set_title('intensity={:.3f}, size={:.3f}'.format(vortex_intensity(Xb[:, :, :, m]), vortex_size(Xb[:, :, :, m])))
+
 ax = plt.subplot(324)
-ax.contourf(ii, jj, np.mean(X, axis=3)[:, :, 0], np.arange(-40, 40, 2), cmap='bwr')
-ax.set_title('posterior mean')
-# ax.contourf(ii, jj, X[:, :, 0, m], np.arange(-30, 30, 2), cmap='bwr')
+# ax.contourf(ii, jj, np.mean(X, axis=3)[:, :, 0], np.arange(-40, 40, 2), cmap='bwr')
+# ax.set_title('posterior mean')
+# ax.contourf(ii, jj, X[:, :, 0, m], np.arange(-40, 40, 2), cmap='bwr')
+wspd = np.sqrt(X[:, :, 0, m]**2+X[:, :, 1, m]**2)
+ax.contourf(ii, jj, wspd, np.arange(0, 40, 2), cmap='bwr')
+ax.set_title('intensity={:.3f}, size={:.3f}'.format(vortex_intensity(X[:, :, :, m]), vortex_size(X[:, :, :, m])))
 
 ii, jj = np.mgrid[0:ni, 0:nj]
 iout = (ii-ni/2)*dx/1000
 jout = (jj-nj/2)*dx/1000
 cmap = [plt.cm.jet(m) for m in np.linspace(0.2, 0.8, nens)]
+wspd_contour_out = 18
 ax = plt.subplot(325)
 for m in range(nens):
     wspd = np.sqrt(Xb[:, :, 0, m]**2+Xb[:, :, 1, m]**2)
-    ax.contour(iout, jout, wspd, (20,), colors=[cmap[m][0:3]], linewidths=2)
+    ax.contour(iout, jout, wspd, (wspd_contour_out,), colors=[cmap[m][0:3]], linewidths=2)
 wspd = np.sqrt(Xt[:, :, 0]**2+Xt[:, :, 1]**2)
-ax.contour(iout, jout, wspd, (20,), colors='k', linewidths=3)
+ax.contour(iout, jout, wspd, (wspd_contour_out,), colors='k', linewidths=3)
 ax.set_aspect('equal', 'box')
 ax.set_xlim(-135, 135)
 ax.set_ylim(-135, 135)
@@ -106,9 +132,9 @@ ax.tick_params(labelsize=12)
 ax = plt.subplot(326)
 for m in range(nens):
     wspd = np.sqrt(X[:, :, 0, m]**2+X[:, :, 1, m]**2)
-    ax.contour(iout, jout, wspd, (20,), colors=[cmap[m][0:3]], linewidths=2)
+    ax.contour(iout, jout, wspd, (wspd_contour_out,), colors=[cmap[m][0:3]], linewidths=2)
 wspd = np.sqrt(Xt[:, :, 0]**2+Xt[:, :, 1]**2)
-ax.contour(iout, jout, wspd, (20,), colors='k', linewidths=3)
+ax.contour(iout, jout, wspd, (wspd_contour_out,), colors='k', linewidths=3)
 ax.set_aspect('equal', 'box')
 ax.set_xlim(-135, 135)
 ax.set_ylim(-135, 135)
@@ -116,5 +142,6 @@ ax.set_xticks(np.arange(-120, 121, 60))
 ax.set_yticks(np.arange(-120, 121, 60))
 ax.tick_params(labelsize=12)
 
+plt.suptitle('test of {}_s{}_{}'.format(filter_kind, ns, ns_obs))
 plt.show()
 

@@ -79,6 +79,9 @@ def gen_vortex(ni, nj, nv, Vmax, Rmw, loc_sprd=0, loc_bias=0):
     x[:, :, 1] = wspd * (ii - center_i) / dist   ##v component
     return x
 
+def get_wspd(X):
+    return np.sqrt(X[:, :, 0]**2 + X[:, :, 1]**2)
+
 def random_field(n, power_law):
     pk = lambda k: k**((power_law-1)/2)
     wn = fft_wn(n)
@@ -166,16 +169,34 @@ def vortex_center(X):
     return np.array([ic, jc])
 
 def vortex_intensity(X):
+    ###note: assume the vortex wind is highest in the domain (no bkg flow wind peaks)
     u, v = (X[:, :, 0], X[:, :, 1])
     wind = np.sqrt(u**2+v**2)
     return np.max(wind)
+
+def vortex_rmw(X):
+    center = vortex_center(X)
+    wind = np.sqrt(X[:, :, 0]**2 + X[:, :, 1]**2)
+    ni, nj = wind.shape
+    nr = 30
+    wind_rad = np.zeros(nr)
+    count_rad = np.zeros(nr)
+    for i in range(-nr, nr+1):
+        for j in range(-nr, nr+1):
+            r = int(np.sqrt(i**2+j**2))
+            if (r<nr):
+                wind_rad[r] += wind[int(center[0]+i)%ni, int(center[1]+j)%nj]
+                count_rad[r] += 1
+    wind_rad = wind_rad/count_rad
+    wind_max = np.max(wind_rad)
+    return np.where(wind_rad==wind_max)[0][-1]
 
 def vortex_size(X):
     center = vortex_center(X)
     wind = np.sqrt(X[:, :, 0]**2 + X[:, :, 1]**2)
     ni, nj = wind.shape
     nr = 30
-    wind_min = 15  ##15 for no bg flow cases!
+    wind_min = 15
     wind_rad = np.zeros(nr)
     count_rad = np.zeros(nr)
     for i in range(-nr, nr+1):
