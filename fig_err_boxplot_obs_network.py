@@ -7,9 +7,8 @@ from config import *
 cases = ('NoDA', 'EnSRF_s1', 'EnSRF_s2', 'EnSRF_s2_mso', 'EnSRF_s3', 'EnSRF_s3_mso', 'EnSRF_s4', 'EnSRF_s4_mso')
 nens = 20
 Lsprd = (1, 3, 5)
-Lbias = 0
 expname = ('full_network/type1', 'full_network/type2')
-scenario = ('phase1.0', 'phase1.0')
+scenario = ('Vsprd0/Rsprd0.0/phase1.0', 'Vsprd0/Rsprd0.0/phase1.0')
 nreal = (100, 100)
 
 fig, ax = plt.subplots(4, 2, figsize=(12, 12))
@@ -19,23 +18,28 @@ for j in range(2):
             rmse = np.zeros((nreal[j], 4))
             r1 = 0
             for r in range(nreal[j]):
-                rmse[r1, 0] = np.mean(np.load('output/'+expname[j]+'/{:04d}/Lbias{}/Lsprd{}/{}/N{}/{}.npy'.format(r+1, Lbias, Lsprd[l], scenario[j], nens, cases[c]))[nens, 0])
-                rmse[r1, 1] = np.mean(np.load('output/'+expname[j]+'/{:04d}/Lbias{}/Lsprd{}/{}/N{}/{}.npy'.format(r+1, Lbias, Lsprd[l], scenario[j], nens, cases[c]))[0:nens, 1])*9
-                rmse[r1, 2] = np.mean(np.load('output/'+expname[j]+'/{:04d}/Lbias{}/Lsprd{}/{}/N{}/{}.npy'.format(r+1, Lbias, Lsprd[l], scenario[j], nens, cases[c]))[0:nens, 2])
-                rmse[r1, 3] = np.mean(np.load('output/'+expname[j]+'/{:04d}/Lbias{}/Lsprd{}/{}/N{}/{}.npy'.format(r+1, Lbias, Lsprd[l], scenario[j], nens, cases[c]))[0:nens, 3])*9
+                rmse[r1, 0] = np.mean(np.load('output/'+expname[j]+'/{:04d}/Lsprd{}/{}/N{}/{}.npy'.format(r+1, Lsprd[l], scenario[j], nens, cases[c]))[nens, 0])
+                rmse[r1, 1] = np.mean(np.load('output/'+expname[j]+'/{:04d}/Lsprd{}/{}/N{}/{}.npy'.format(r+1, Lsprd[l], scenario[j], nens, cases[c]))[0:nens, 1])*9
+                rmse[r1, 2] = np.mean(np.load('output/'+expname[j]+'/{:04d}/Lsprd{}/{}/N{}/{}.npy'.format(r+1, Lsprd[l], scenario[j], nens, cases[c]))[0:nens, 2])
+                rmse[r1, 3] = np.mean(np.load('output/'+expname[j]+'/{:04d}/Lsprd{}/{}/N{}/{}.npy'.format(r+1, Lsprd[l], scenario[j], nens, cases[c]))[0:nens, 3])*9
                 r1 += 1
             for i in range(4):
                 x = l + c*0.1 + 0.1
                 q3, q1 = np.percentile(rmse[0:r1, i], [75, 25])
                 median = np.median(rmse[0:r1, i])
-                fc = [1, 1, 1]
                 if c==0:
                     fc = [.7, .7, .7]
+                    ec = [0, 0, 0]
+                if c==1:
+                    fc = [1, 1, 1]
+                    ec = [0, 0, 0]
                 if c in (2, 4, 6):
-                    fc = [0, .7, .85]
+                    fc = [0, .7, .9]
+                    ec = None
                 if c in (3, 5, 7):
-                    fc = [.8, .4, .4]
-                ax[i, j].add_patch(Polygon([(x-0.04,q1), (x-0.04,q3), (x+0.04,q3), (x+0.04,q1)], facecolor=fc, ec='black'))
+                    fc = [.8, .3, .3]
+                    ec = None
+                ax[i, j].add_patch(Polygon([(x-0.04,q1), (x-0.04,q3), (x+0.04,q3), (x+0.04,q1)], facecolor=fc, ec=ec))
                 ax[i, j].plot(x, median, marker='.', color='black')
 ymax = (1.8, 45, 8, 10)
 for j in range(2):
