@@ -6,12 +6,12 @@ from config import *
 
 cases = ('NoDA', 'EnSRF_s1', 'EnSRF_s2', 'EnSRF_s2_mso', 'EnSRF_s3', 'EnSRF_s3_mso', 'EnSRF_s4', 'EnSRF_s4_mso')
 nens = 20
-Lsprd = (1, 3, 5)
+Lsprd = (1, 5)
 expname = ('full_network/type1', 'full_network/type2')
 scenario = ('Vsprd0/Rsprd0.0/phase1.0', 'Vsprd0/Rsprd0.0/phase1.0')
 nreal = 100
 
-fig, ax = plt.subplots(4, 2, figsize=(8, 12))
+fig, ax = plt.subplots(4, 2, figsize=(7, 10))
 for j in range(len(scenario)):
     for l in range(len(Lsprd)):
         for c in range(len(cases)):
@@ -41,7 +41,7 @@ for j in range(len(scenario)):
                     ec = None
                 ax[i, j].add_patch(Polygon([(x-0.04,q1), (x-0.04,q3), (x+0.04,q3), (x+0.04,q1)], facecolor=fc, ec=ec))
                 ax[i, j].plot(x, median, marker='.', color='black')
-ymax = (1.8, 45, 8, 10)
+ymax = (1.8, 50, 8, 10)
 for j in range(len(scenario)):
     for i in range(4):
         ax[i, j].grid()
